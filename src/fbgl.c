@@ -18,9 +18,13 @@ static void FBGL_close_library(void *lib)
     FreeLibrary(lib);
 }
 
-void (*FB_glEnable)();
-void (*FB_glDisable)();
-void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
+void  (*FB_glEnable)();
+void  (*FB_glDisable)();
+
+void  (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
+void  (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
+void  (*FB_glBindBuffer)(GLenum target, GLuint buffer);
+void *(*FB_glMapBuffer)(GLenum target, GLenum access);
 
 enum FbErrorCode FBGL_load_procs()
 {
@@ -38,7 +42,11 @@ enum FbErrorCode FBGL_load_procs()
 
     FB_glEnable = FBGL_GetProcAddress("glEnable");
     FB_glDisable = FBGL_GetProcAddress("glDisable");
-    FB_glGenBuffer = FBGL_GetProcAddress("glDisable");
+
+    FB_glGenBuffer = FBGL_GetProcAddress("glGenBuffers");
+    FB_glDeleteBuffers = FBGL_GetProcAddress("glDeleteBuffers");
+    FB_glBindBuffer = FBGL_GetProcAddress("glBindBuffer");
+    FB_glMapBuffer = FBGL_GetProcAddress("glMapBuffer");
 
     FBGL_close_library(lib);
 

@@ -2,24 +2,17 @@
 
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
-typedef unsigned int GLbitfield;
 typedef void GLvoid;
 typedef signed char GLbyte;
 typedef short GLshort;
 typedef int GLint;
-typedef int GLclampx;
 typedef unsigned char GLubyte;
 typedef unsigned short GLushort;
 typedef unsigned int GLuint;
 typedef int GLsizei;
 typedef float GLfloat;
-typedef float GLclampf;
 typedef double GLdouble;
-typedef double GLclampd;
-typedef void *GLeglClientBufferEXT;
-typedef void *GLeglImageOES;
 typedef char GLchar;
-typedef char GLcharARB;
 
 enum FbErrorCode;
 
@@ -32,12 +25,21 @@ typedef void (GLDEBUGPROCKHR)(GLenum source,GLenum type,GLuint id,GLenum severit
 typedef void (GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei length,const GLchar *message,void *userParam);
 
 // api functions
-extern void (*FB_glEnable)();
-extern void (*FB_glDisable)();
-extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
+extern void  (*FB_glEnable)();
+extern void  (*FB_glDisable)();
+
+extern void  (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
+extern void  (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
+extern void  (*FB_glBindBuffer)(GLenum target, GLuint buffer);
+extern void *(*FB_glMapBuffer)(GLenum target, GLenum access);
 
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
+
+#define glGenBuffer FB_glGenBuffer
+#define glDeleteBuffers FB_glDeleteBuffers
+#define glBindBuffer FB_glBindBuffer
+#define glMapBuffer FB_glMapBuffer
 
 // enums
 #define GL_DEPTH_BUFFER_BIT 0x00000100
@@ -96,15 +98,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_DEPTH_WRITEMASK 0x0B72
 #define GL_DEPTH_CLEAR_VALUE 0x0B73
 #define GL_DEPTH_FUNC 0x0B74
-#define GL_STENCIL_TEST 0x0B90
-#define GL_STENCIL_CLEAR_VALUE 0x0B91
-#define GL_STENCIL_FUNC 0x0B92
-#define GL_STENCIL_VALUE_MASK 0x0B93
-#define GL_STENCIL_FAIL 0x0B94
-#define GL_STENCIL_PASS_DEPTH_FAIL 0x0B95
-#define GL_STENCIL_PASS_DEPTH_PASS 0x0B96
-#define GL_STENCIL_REF 0x0B97
-#define GL_STENCIL_WRITEMASK 0x0B98
 #define GL_VIEWPORT 0x0BA2
 #define GL_BLEND_DST 0x0BE0
 #define GL_BLEND_SRC 0x0BE1
@@ -131,7 +124,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_PACK_ALIGNMENT 0x0D05
 #define GL_MAX_TEXTURE_SIZE 0x0D33
 #define GL_MAX_VIEWPORT_DIMS 0x0D3A
-#define GL_SUBPIXEL_BITS 0x0D50
 #define GL_TEXTURE_1D 0x0DE0
 #define GL_TEXTURE_2D 0x0DE1
 #define GL_TEXTURE_WIDTH 0x1000
@@ -144,26 +136,7 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_INT 0x1404
 #define GL_UNSIGNED_INT 0x1405
 #define GL_FLOAT 0x1406
-#define GL_STACK_OVERFLOW 0x0503
-#define GL_STACK_UNDERFLOW 0x0504
 #define GL_CLEAR 0x1500
-#define GL_AND 0x1501
-#define GL_AND_REVERSE 0x1502
-#define GL_COPY 0x1503
-#define GL_AND_INVERTED 0x1504
-#define GL_NOOP 0x1505
-#define GL_XOR 0x1506
-#define GL_OR 0x1507
-#define GL_NOR 0x1508
-#define GL_EQUIV 0x1509
-#define GL_INVERT 0x150A
-#define GL_OR_REVERSE 0x150B
-#define GL_COPY_INVERTED 0x150C
-#define GL_OR_INVERTED 0x150D
-#define GL_NAND 0x150E
-#define GL_SET 0x150F
-#define GL_STENCIL 0x1802
-#define GL_STENCIL_INDEX 0x1901
 #define GL_DEPTH_COMPONENT 0x1902
 #define GL_RED 0x1903
 #define GL_GREEN 0x1904
@@ -174,10 +147,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_POINT 0x1B00
 #define GL_LINE 0x1B01
 #define GL_FILL 0x1B02
-#define GL_KEEP 0x1E00
-#define GL_REPLACE 0x1E01
-#define GL_INCR 0x1E02
-#define GL_DECR 0x1E03
 #define GL_VENDOR 0x1F00
 #define GL_RENDERER 0x1F01
 #define GL_VERSION 0x1F02
@@ -193,9 +162,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_TEXTURE_WRAP_S 0x2802
 #define GL_TEXTURE_WRAP_T 0x2803
 #define GL_REPEAT 0x2901
-#define GL_ACCUM 0x0100
-#define GL_LOAD 0x0101
-#define GL_RETURN 0x0102
 #define GL_MULT 0x0103
 #define GL_ADD 0x0104
 #define GL_ALPHA_TEST 0x0BC0
@@ -241,20 +207,8 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_INTENSITY8 0x804B
 #define GL_INTENSITY12 0x804C
 #define GL_INTENSITY16 0x804D
-#define GL_UNSIGNED_BYTE_3_3_2 0x8032
-#define GL_UNSIGNED_SHORT_4_4_4_4 0x8033
-#define GL_UNSIGNED_SHORT_5_5_5_1 0x8034
-#define GL_UNSIGNED_INT_8_8_8_8 0x8035
-#define GL_UNSIGNED_INT_10_10_10_2 0x8036
 #define GL_TEXTURE_3D 0x806F
 #define GL_MAX_3D_TEXTURE_SIZE 0x8073
-#define GL_UNSIGNED_BYTE_2_3_3_REV 0x8362
-#define GL_UNSIGNED_SHORT_5_6_5 0x8363
-#define GL_UNSIGNED_SHORT_5_6_5_REV 0x8364
-#define GL_UNSIGNED_SHORT_4_4_4_4_REV 0x8365
-#define GL_UNSIGNED_SHORT_1_5_5_5_REV 0x8366
-#define GL_UNSIGNED_INT_8_8_8_8_REV 0x8367
-#define GL_UNSIGNED_INT_2_10_10_10_REV 0x8368
 #define GL_BGR 0x80E0
 #define GL_BGRA 0x80E1
 #define GL_MAX_ELEMENTS_VERTICES 0x80E8
@@ -296,30 +250,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_COMPRESSED_LUMINANCE 0x84EA
 #define GL_COMPRESSED_LUMINANCE_ALPHA 0x84EB
 #define GL_COMPRESSED_INTENSITY 0x84EC
-#define GL_COMBINE 0x8570
-#define GL_COMBINE_RGB 0x8571
-#define GL_COMBINE_ALPHA 0x8572
-#define GL_SOURCE0_RGB 0x8580
-#define GL_SOURCE1_RGB 0x8581
-#define GL_SOURCE2_RGB 0x8582
-#define GL_SOURCE0_ALPHA 0x8588
-#define GL_SOURCE1_ALPHA 0x8589
-#define GL_SOURCE2_ALPHA 0x858A
-#define GL_OPERAND0_RGB 0x8590
-#define GL_OPERAND1_RGB 0x8591
-#define GL_OPERAND2_RGB 0x8592
-#define GL_OPERAND0_ALPHA 0x8598
-#define GL_OPERAND1_ALPHA 0x8599
-#define GL_OPERAND2_ALPHA 0x859A
-#define GL_RGB_SCALE 0x8573
-#define GL_ADD_SIGNED 0x8574
-#define GL_INTERPOLATE 0x8575
-#define GL_SUBTRACT 0x84E7
-#define GL_CONSTANT 0x8576
-#define GL_PRIMARY_COLOR 0x8577
-#define GL_PREVIOUS 0x8578
-#define GL_DOT3_RGB 0x86AE
-#define GL_DOT3_RGBA 0x86AF
 #define GL_BLEND_DST_RGB 0x80C8
 #define GL_BLEND_SRC_RGB 0x80C9
 #define GL_BLEND_DST_ALPHA 0x80CA
@@ -330,36 +260,21 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_MIRRORED_REPEAT 0x8370
 #define GL_MAX_TEXTURE_LOD_BIAS 0x84FD
 #define GL_TEXTURE_LOD_BIAS 0x8501
-#define GL_INCR_WRAP 0x8507
-#define GL_DECR_WRAP 0x8508
 #define GL_TEXTURE_DEPTH_SIZE 0x884A
 #define GL_TEXTURE_COMPARE_MODE 0x884C
 #define GL_TEXTURE_COMPARE_FUNC 0x884D
-#define GL_POINT_SIZE_MIN 0x8126
-#define GL_POINT_SIZE_MAX 0x8127
-#define GL_POINT_DISTANCE_ATTENUATION 0x8129
 #define GL_GENERATE_MIPMAP 0x8191
 #define GL_GENERATE_MIPMAP_HINT 0x8192
 #define GL_FRAGMENT_DEPTH 0x8452
 #define GL_DEPTH_TEXTURE_MODE 0x884B
-#define GL_COMPARE_R_TO_TEXTURE 0x884E
 #define GL_BLEND_COLOR 0x8005
 #define GL_BLEND_EQUATION 0x8009
 #define GL_CONSTANT_COLOR 0x8001
 #define GL_ONE_MINUS_CONSTANT_COLOR 0x8002
 #define GL_CONSTANT_ALPHA 0x8003
 #define GL_ONE_MINUS_CONSTANT_ALPHA 0x8004
-#define GL_FUNC_ADD 0x8006
-#define GL_FUNC_REVERSE_SUBTRACT 0x800B
-#define GL_FUNC_SUBTRACT 0x800A
 #define GL_MIN 0x8007
 #define GL_MAX 0x8008
-#define GL_BUFFER_SIZE 0x8764
-#define GL_BUFFER_USAGE 0x8765
-#define GL_QUERY_COUNTER_BITS 0x8864
-#define GL_CURRENT_QUERY 0x8865
-#define GL_QUERY_RESULT 0x8866
-#define GL_QUERY_RESULT_AVAILABLE 0x8867
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_ELEMENT_ARRAY_BUFFER 0x8893
 #define GL_ARRAY_BUFFER_BINDING 0x8894
@@ -381,17 +296,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_DYNAMIC_READ 0x88E9
 #define GL_DYNAMIC_COPY 0x88EA
 #define GL_SAMPLES_PASSED 0x8914
-#define GL_SRC1_ALPHA 0x8589
-#define GL_SRC0_RGB 0x8580
-#define GL_SRC1_RGB 0x8581
-#define GL_SRC2_RGB 0x8582
-#define GL_SRC0_ALPHA 0x8588
-#define GL_SRC2_ALPHA 0x858A
-#define GL_BLEND_EQUATION_RGB 0x8009
-#define GL_STENCIL_BACK_FUNC 0x8800
-#define GL_STENCIL_BACK_FAIL 0x8801
-#define GL_STENCIL_BACK_PASS_DEPTH_FAIL 0x8802
-#define GL_STENCIL_BACK_PASS_DEPTH_PASS 0x8803
 #define GL_MAX_DRAW_BUFFERS 0x8824
 #define GL_DRAW_BUFFER0 0x8825
 #define GL_DRAW_BUFFER1 0x8826
@@ -409,7 +313,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_DRAW_BUFFER13 0x8832
 #define GL_DRAW_BUFFER14 0x8833
 #define GL_DRAW_BUFFER15 0x8834
-#define GL_BLEND_EQUATION_ALPHA 0x883D
 #define GL_MAX_VERTEX_ATTRIBS 0x8869
 #define GL_MAX_TEXTURE_IMAGE_UNITS 0x8872
 #define GL_FRAGMENT_SHADER 0x8B30
@@ -453,9 +356,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_FRAGMENT_SHADER_DERIVATIVE_HINT 0x8B8B
 #define GL_SHADING_LANGUAGE_VERSION 0x8B8C
 #define GL_CURRENT_PROGRAM 0x8B8D
-#define GL_STENCIL_BACK_REF 0x8CA3
-#define GL_STENCIL_BACK_VALUE_MASK 0x8CA4
-#define GL_STENCIL_BACK_WRITEMASK 0x8CA5
 #define GL_MAX_TEXTURE_COORDS 0x8871
 #define GL_PIXEL_PACK_BUFFER 0x88EB
 #define GL_PIXEL_UNPACK_BUFFER 0x88EC
@@ -481,14 +381,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_COMPRESSED_SLUMINANCE 0x8C4A
 #define GL_COMPRESSED_SLUMINANCE_ALPHA 0x8C4B
 #define GL_COMPARE_REF_TO_TEXTURE 0x884E
-#define GL_CLIP_DISTANCE0 0x3000
-#define GL_CLIP_DISTANCE1 0x3001
-#define GL_CLIP_DISTANCE2 0x3002
-#define GL_CLIP_DISTANCE3 0x3003
-#define GL_CLIP_DISTANCE4 0x3004
-#define GL_CLIP_DISTANCE5 0x3005
-#define GL_CLIP_DISTANCE6 0x3006
-#define GL_CLIP_DISTANCE7 0x3007
 #define GL_MAX_CLIP_DISTANCES 0x0D32
 #define GL_MAJOR_VERSION 0x821B
 #define GL_MINOR_VERSION 0x821C
@@ -616,10 +508,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_RENDERBUFFER_WIDTH 0x8D42
 #define GL_RENDERBUFFER_HEIGHT 0x8D43
 #define GL_RENDERBUFFER_INTERNAL_FORMAT 0x8D44
-#define GL_STENCIL_INDEX1 0x8D46
-#define GL_STENCIL_INDEX4 0x8D47
-#define GL_STENCIL_INDEX8 0x8D48
-#define GL_STENCIL_INDEX16 0x8D49
 #define GL_RENDERBUFFER_RED_SIZE 0x8D50
 #define GL_RENDERBUFFER_GREEN_SIZE 0x8D51
 #define GL_RENDERBUFFER_BLUE_SIZE 0x8D52
@@ -749,11 +637,6 @@ extern void (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
 #define GL_MAX_FRAGMENT_INPUT_COMPONENTS 0x9125
 #define GL_CONTEXT_PROFILE_MASK 0x9126
 #define GL_DEPTH_CLAMP 0x864F
-#define GL_QUADS_FOLLOW_PROVOKING_VERTEX_CONVENTION 0x8E4C
-#define GL_FIRST_VERTEX_CONVENTION 0x8E4D
-#define GL_LAST_VERTEX_CONVENTION 0x8E4E
-#define GL_PROVOKING_VERTEX 0x8E4F
-#define GL_TEXTURE_CUBE_MAP_SEAMLESS 0x884F
 #define GL_MAX_SERVER_WAIT_TIMEOUT 0x9111
 #define GL_OBJECT_TYPE 0x9112
 #define GL_SYNC_CONDITION 0x9113
