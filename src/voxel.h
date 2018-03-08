@@ -11,4 +11,5 @@ struct FbVoxel {
 struct FbVoxelWorld;
 
 void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world);
+void VXL_set_voxel(struct FbVoxelWorld *world, int x, int y, int z, struct FbVoxel voxel);
 struct FbVoxel VXL_find_voxel(struct FbVoxelWorld *world, int x, int y, int z);

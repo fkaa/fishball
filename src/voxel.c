@@ -40,6 +40,14 @@ struct FbVoxelWorld {
 
 static unsigned long long VXL_encode_chunk_key(int cx, int cy, int cz);
 
+void VXL_request_chunk_page(struct FbVoxelMemory *memory, struct FbVoxelChunkPage *page)
+{
+    struct FbVoxelChunkPage new_page = (struct FbVoxelChunkPage) { .voxels = malloc(VIRTUAL_CHUNK_VOLUME) };
+
+    ARRAY_push(memory->chunk_pages, new_page);
+
+    *page = new_page;
+}
 
 void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
 {
@@ -58,7 +66,7 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
         VIRTUAL_CHUNK_COUNT
     );
 
-    for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
+    /*for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
         struct FbVoxelChunkPage page = (struct FbVoxelChunkPage) { .voxels = malloc(VIRTUAL_CHUNK_VOLUME) };
         ARRAY_push(w.memory.chunk_pages, page);
     }
@@ -66,14 +74,14 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
         for (int j = 0; j < VIRTUAL_CHUNK_VOLUME; j++) {
             w.memory.chunk_pages[i].voxels[j] = (struct FbVoxel) { .type = (i * j) % 255 };
         }
-    }
+    }*/
 
     w.num_chunks = 1;
     ARRAY_push(w.chunk_keys, VXL_encode_chunk_key(0, 0, 0));
 
     struct FbVoxelChunk chunk = { 0 };
     for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
-        chunk.slices[i] = w.memory.chunk_pages[i];
+        chunk.slices[i] = (struct FbVoxelChunkPage) { 0 };// w.memory.chunk_pages[i];
     }
     ARRAY_push(w.chunks, chunk);
 
@@ -134,13 +142,50 @@ static unsigned int VXL_encode_voxel_position(char vx, char vy, char vz)
     return idx;
 }
 
-struct FbVoxel VXL_chunk_get(struct FbVoxelChunk *chunk, char x, char y, char z)
+void VXL_chunk_set(struct FbVoxelWorld *world, struct FbVoxelChunk *chunk, int x, int y, int z, struct FbVoxel voxel)
 {
     unsigned int virtual_chunk_index = ((x + 16 * (y + 16 * z)) >> 9); 
     unsigned int index = VXL_encode_voxel_position(x, y, z);
 
     struct FbVoxelChunkPage virtual_chunk = chunk->slices[virtual_chunk_index];
-    return virtual_chunk.voxels[index];
+
+    if (!virtual_chunk.voxels) {
+        VXL_request_chunk_page(&world->memory, &chunk->slices[virtual_chunk_index]);
+        virtual_chunk = chunk->slices[virtual_chunk_index];
+    }
+    
+    virtual_chunk.voxels[index] = voxel;
+}
+
+struct FbVoxel VXL_chunk_get(struct FbVoxelChunk *chunk, char x, char y, char z)
+{
+    struct FbVoxel voxel = { 0 };
+
+    unsigned int virtual_chunk_index = ((x + 16 * (y + 16 * z)) >> 9); 
+    unsigned int index = VXL_encode_voxel_position(x, y, z);
+
+    struct FbVoxelChunkPage virtual_chunk = chunk->slices[virtual_chunk_index];
+    if (virtual_chunk.voxels) {
+        voxel = virtual_chunk.voxels[index];
+    }
+    else {
+        // TODO(fkaa): check if virtual chunk is backed by existing memory and
+        //             pull into memory if so
+    }
+
+    return voxel;
+}
+
+void VXL_set_voxel(struct FbVoxelWorld *world, int x, int y, int z, struct FbVoxel voxel)
+{
+    struct FbVoxelChunk *chunk = 0;
+    VXL_find_chunk(world, x, y, z, &chunk);
+
+    if (!chunk) {
+
+    }
+
+    VXL_chunk_set(world, chunk, x & VIRTUAL_CHUNK_MASK, y & VIRTUAL_CHUNK_MASK, z & VIRTUAL_CHUNK_MASK, voxel);
 }
 
 struct FbVoxel VXL_find_voxel(struct FbVoxelWorld *world, int x, int y, int z)
