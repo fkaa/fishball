@@ -15,6 +15,7 @@ struct FbArrayHeader {
     ARRAY_full(array) ? array = ARRAY_grow(array, sizeof(*array)) : 0, \
     array[FB_ARRAY_HEADER(array)->size++] = item
 
+#include <stdio.h>
 // TODO(fkaa): move into .c
 static void *ARRAY_grow(void *arr, int size)
 {
@@ -26,5 +27,5 @@ static void *ARRAY_grow(void *arr, int size)
     if (!arr)
         header->size = 0;
 
-    return header + sizeof(struct FbArrayHeader);
+    return (void *)((char*)header + sizeof(struct FbArrayHeader));
 }
