@@ -41,6 +41,7 @@ int main() {
     VXL_new_world(cfg, &world);
 
     StartCounter();
+/*    for (int l = 0; l < 10000; l++)
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
@@ -49,7 +50,11 @@ int main() {
                 //printf("%d, ", voxel.type);
             }
         }
-    }
+    }*/
+    struct FbVoxelChunk *chunk = 0;
+    VXL_find_chunk(world, 0, 0, 0, &chunk);
+    struct FbVoxelVertices *vertices = 0;
+    VXL_create_geometry(chunk, vertices);
     printf("%fms\n", GetCounter());
     FBGL_load_procs();
 

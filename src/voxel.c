@@ -1,30 +1,8 @@
 #include "voxel.h"
 #include "array.h"
 
-// 32^3
-#define CHUNK_SIZE_EXPONENT 5
-#define CHUNK_SIZE (1 << CHUNK_SIZE_EXPONENT)
-#define CHUNK_MASK (CHUNK_SIZE - 1)
-#define CHUNK_VOLUME (CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE)
-
-// 16^3
-#define VIRTUAL_CHUNK_SIZE_EXPONENT 4
-#define VIRTUAL_CHUNK_SIZE (1 << VIRTUAL_CHUNK_SIZE_EXPONENT)
-#define VIRTUAL_CHUNK_MASK (VIRTUAL_CHUNK_SIZE - 1)
-#define VIRTUAL_CHUNK_VOLUME (VIRTUAL_CHUNK_SIZE * VIRTUAL_CHUNK_SIZE * VIRTUAL_CHUNK_SIZE)
-
-#define VIRTUAL_CHUNK_COUNT (CHUNK_VOLUME / VIRTUAL_CHUNK_VOLUME)
-
 #include <stdlib.h>
 #include <stdio.h>
-
-struct FbVoxelChunkPage {
-    struct FbVoxel *voxels;
-};
-
-struct FbVoxelChunk {
-    struct FbVoxelChunkPage slices[VIRTUAL_CHUNK_COUNT];
-};
 
 struct FbVoxelMemory {
     struct FbVoxelChunkPage *chunk_pages;
@@ -200,4 +178,99 @@ struct FbVoxel VXL_find_voxel(struct FbVoxelWorld *world, int x, int y, int z)
 
 
     return voxel;
+}
+
+void VXL_create_geometry(struct FbVoxelChunk *chunk, struct FbVoxelVertex *vertices)
+{
+    for (char x = 0; x < CHUNK_SIZE; x++) {
+        for (char y = 0; y < CHUNK_SIZE; y++) {
+            for (char z = 0; z < CHUNK_SIZE; z++) {
+                struct FbVoxel voxel = VXL_chunk_get(chunk, x, y, z);
+
+                unsigned char r = 255, g = 128, b = 64;
+                struct FbVoxelVertex bot_sw = {
+                    x, y, z,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex bot_nw = {
+                    x, y, z + 1,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex bot_ne = {
+                    x + 1, y, z + 1,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex bot_se = {
+                    x + 1, y, z,
+                    r, g, b,
+                    0, -1, 0
+                };
+
+                struct FbVoxelVertex top_sw = {
+                    x, y, z,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex top_nw = {
+                    x, y, z + 1,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex top_ne = {
+                    x + 1, y, z + 1,
+                    r, g, b,
+                    0, -1, 0
+                };
+                struct FbVoxelVertex top_se = {
+                    x + 1, y, z,
+                    r, g, b,
+                    0, -1, 0
+                };
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+                ARRAY_push(vertices, bot_sw);
+                ARRAY_push(vertices, bot_se);
+                ARRAY_push(vertices, bot_ne);
+            }
+        }
+    }
 }
