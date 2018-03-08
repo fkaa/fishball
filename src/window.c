@@ -24,7 +24,7 @@ unsigned window_new(struct FbWindowConfig cfg, struct FbWindow **wnd)
     struct FbWindow window = {0};
     window.window_handle = glfwCreateWindow(cfg.width, cfg.height, cfg.title, NULL, NULL);
 
-    *wnd = malloc(sizeof(*wnd));
+    *wnd = malloc(sizeof(**wnd));
     **wnd = window;
 
     return FB_ERR_NONE;
@@ -50,6 +50,11 @@ void window_cxt(struct FbWindow *wnd)
 void window_swap(struct FbWindow *wnd)
 {
     glfwSwapBuffers(wnd->window_handle);
+}
+
+int window_open(struct FbWindow *wnd)
+{
+    return !glfwWindowShouldClose(wnd->window_handle);
 }
 
 void window_poll(struct FbWindow *_wnd)

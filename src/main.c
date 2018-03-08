@@ -4,6 +4,7 @@
 #include "window.h"
 #include "fbgl.h"
 #include "voxel.h"
+#include "array.h"
 #include <windows.h>
 double PCFreq = 0.0;
 __int64 CounterStart = 0;
@@ -40,8 +41,6 @@ int main() {
     struct FbVoxelWorld *world;
     VXL_new_world(cfg, &world);
 
-    StartCounter();
-/*    for (int l = 0; l < 10000; l++)
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
@@ -50,16 +49,21 @@ int main() {
                 //printf("%d, ", voxel.type);
             }
         }
-    }*/
+    }
     struct FbVoxelChunk *chunk = 0;
     VXL_find_chunk(world, 0, 0, 0, &chunk);
-    struct FbVoxelVertices *vertices = 0;
-    VXL_create_geometry(chunk, vertices);
-    printf("%fms\n", GetCounter());
+    StartCounter();
+        struct FbVoxelVertex *vertices = 0;
+        VXL_create_geometry(chunk, &vertices);
+    printf("%fms, %d\n", GetCounter(), ARRAY_size(vertices));
+    StartCounter();
+        vertices = 0;
+        VXL_create_geometry2(chunk, &vertices);
+    printf("%fms, %d\n", GetCounter(), ARRAY_size(vertices));
     FBGL_load_procs();
 
-    while (1) {
-        glEnable(GL_BLEND);
+    while (window_open(wnd)) {
+        //glEnable(GL_BLEND);
         window_swap(wnd);
         window_poll(wnd);
     }

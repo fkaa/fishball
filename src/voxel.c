@@ -63,7 +63,7 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
     }
     ARRAY_push(w.chunks, chunk);
 
-    *world = malloc(sizeof(*world));
+    *world = malloc(sizeof(**world));
     **world = w;
 }
 
@@ -180,97 +180,301 @@ struct FbVoxel VXL_find_voxel(struct FbVoxelWorld *world, int x, int y, int z)
     return voxel;
 }
 
-void VXL_create_geometry(struct FbVoxelChunk *chunk, struct FbVoxelVertex *vertices)
+void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **vertices)
 {
-    for (char x = 0; x < CHUNK_SIZE; x++) {
-        for (char y = 0; y < CHUNK_SIZE; y++) {
-            for (char z = 0; z < CHUNK_SIZE; z++) {
-                struct FbVoxel voxel = VXL_chunk_get(chunk, x, y, z);
+    struct FbVoxelVertex *local_vertex_buffer = *vertices;
+    struct FbVoxelVertex local_vertices[8 * 6];
+    for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
+        struct FbVoxelChunkPage virtual_chunk = chunk->slices[i];
+        if (virtual_chunk.voxels) {
+            for (char x = 0; x < VIRTUAL_CHUNK_SIZE; x++) {
+                for (char y = 0; y < VIRTUAL_CHUNK_SIZE; y++) {
+                    for (char z = 0; z < VIRTUAL_CHUNK_SIZE; z++) {
+                        unsigned int center = VXL_encode_voxel_position(x, y, z);
+                        unsigned int px = VXL_encode_voxel_position(x + 1, y, z);
+                        unsigned int nx = VXL_encode_voxel_position(x - 1, y, z);
+                        unsigned int py = VXL_encode_voxel_position(x, y + 1, z);
+                        unsigned int ny = VXL_encode_voxel_position(x, y - 1, z);
+                        unsigned int pz = VXL_encode_voxel_position(x, y, z + 1);
+                        unsigned int nz = VXL_encode_voxel_position(x, y, z - 1);
 
-                unsigned char r = 255, g = 128, b = 64;
-                struct FbVoxelVertex bot_sw = {
-                    x, y, z,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex bot_nw = {
-                    x, y, z + 1,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex bot_ne = {
-                    x + 1, y, z + 1,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex bot_se = {
-                    x + 1, y, z,
-                    r, g, b,
-                    0, -1, 0
-                };
+                        unsigned int vertex_count = 0;
+                        unsigned char r = 255, g = 128, b = 64;
 
-                struct FbVoxelVertex top_sw = {
-                    x, y, z,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex top_nw = {
-                    x, y, z + 1,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex top_ne = {
-                    x + 1, y, z + 1,
-                    r, g, b,
-                    0, -1, 0
-                };
-                struct FbVoxelVertex top_se = {
-                    x + 1, y, z,
-                    r, g, b,
-                    0, -1, 0
-                };
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                        if (virtual_chunk.voxels[ny].type == 0) {
+                            struct FbVoxelVertex bot_sw = {
+                                x, y, z, r, g, b, 0, -1, 0
+                            };
+                            struct FbVoxelVertex bot_nw = {
+                                x, y, z + 1, r, g, b, 0, -1, 0
+                            };
+                            struct FbVoxelVertex bot_ne = {
+                                x + 1, y, z + 1, r, g, b, 0, -1, 0
+                            };
+                            struct FbVoxelVertex bot_se = {
+                                x + 1, y, z, r, g, b, 0, -1, 0
+                            };
 
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                            
+                            local_vertices[vertex_count++] = bot_sw;
+                            local_vertices[vertex_count++] = bot_se;
+                            local_vertices[vertex_count++] = bot_ne;
+                            local_vertices[vertex_count++] = bot_sw;
+                            local_vertices[vertex_count++] = bot_se;
+                            local_vertices[vertex_count++] = bot_ne;
+                        }
 
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                        if (virtual_chunk.voxels[py].type == 0) {
+                            struct FbVoxelVertex top_sw = {
+                                x, y+1, z, r, g, b, 0, 1, 0
+                            };
+                            struct FbVoxelVertex top_nw = {
+                                x, y+1, z + 1, r, g, b, 0, 1, 0
+                            };
+                            struct FbVoxelVertex top_ne = {
+                                x + 1, y+1, z + 1, r, g, b, 0, 1, 0
+                            };
+                            struct FbVoxelVertex top_se = {
+                                x + 1, y+1, z, r, g, b, 0, 1, 0
+                            };
 
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                            local_vertices[vertex_count++] = top_sw;
+                            local_vertices[vertex_count++] = top_se;
+                            local_vertices[vertex_count++] = top_ne;
+                            local_vertices[vertex_count++] = top_sw;
+                            local_vertices[vertex_count++] = top_se;
+                            local_vertices[vertex_count++] = top_ne;
+                        }
 
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                        if (virtual_chunk.voxels[nx].type == 0) {
+                            struct FbVoxelVertex left_sw = {
+                                x, y, z, r, g, b, -1, 0, 0
+                            };
+                            struct FbVoxelVertex left_nw = {
+                                x, y+1, z, r, g, b, -1, 0, 0
+                            };
+                            struct FbVoxelVertex left_ne = {
+                                x + 1, y+1, z, r, g, b, -1, 0, 0
+                            };
+                            struct FbVoxelVertex left_se = {
+                                x + 1, y, z, r, g, b, -1, 0, 0
+                            };
 
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
-                ARRAY_push(vertices, bot_sw);
-                ARRAY_push(vertices, bot_se);
-                ARRAY_push(vertices, bot_ne);
+                            local_vertices[vertex_count++] = left_sw;
+                            local_vertices[vertex_count++] = left_se;
+                            local_vertices[vertex_count++] = left_ne;
+                            local_vertices[vertex_count++] = left_sw;
+                            local_vertices[vertex_count++] = left_se;
+                            local_vertices[vertex_count++] = left_ne;
+                        }
+
+                        if (virtual_chunk.voxels[px].type == 0) {
+                            struct FbVoxelVertex right_sw = {
+                                x, y, z+1, r, g, b, 1, 0, 0
+                            };
+                            struct FbVoxelVertex right_nw = {
+                                x, y+1, z+1, r, g, b, 1, 0, 0
+                            };
+                            struct FbVoxelVertex right_ne = {
+                                x + 1, y+1, z+1, r, g, b, 1, 0, 0
+                            };
+                            struct FbVoxelVertex right_se = {
+                                x + 1, y, z+1, r, g, b, 1, 0, 0
+                            };
+
+                            local_vertices[vertex_count++] = right_sw;
+                            local_vertices[vertex_count++] = right_se;
+                            local_vertices[vertex_count++] = right_ne;
+                            local_vertices[vertex_count++] = right_sw;
+                            local_vertices[vertex_count++] = right_se;
+                            local_vertices[vertex_count++] = right_ne;
+                        }
+
+                        if (virtual_chunk.voxels[nz].type == 0) {
+                            struct FbVoxelVertex front_sw = {
+                                x, y, z+1, r, g, b, 0, 0, 1
+                            };
+                            struct FbVoxelVertex front_nw = {
+                                x, y+1, z+1, r, g, b, 0, 0, 1
+                            };
+                            struct FbVoxelVertex front_ne = {
+                                x + 1, y+1, z+1, r, g, b, 0, 0, 1
+                            };
+                            struct FbVoxelVertex front_se = {
+                                x + 1, y, z+1, r, g, b, 0, 0, 1
+                            };
+
+                            local_vertices[vertex_count++] = front_sw;
+                            local_vertices[vertex_count++] = front_se;
+                            local_vertices[vertex_count++] = front_ne;
+                            local_vertices[vertex_count++] = front_sw;
+                            local_vertices[vertex_count++] = front_se;
+                            local_vertices[vertex_count++] = front_ne;
+                        }
+
+                        if (virtual_chunk.voxels[pz].type == 0) {
+                            struct FbVoxelVertex back_sw = {
+                                x, y, z, r, g, b, 0, 0, -1
+                            };
+                            struct FbVoxelVertex back_nw = {
+                                x, y+1, z, r, g, b, 0, 0, -1
+                            };
+                            struct FbVoxelVertex back_ne = {
+                                x + 1, y+1, z, r, g, b, 0, 0, -1
+                            };
+                            struct FbVoxelVertex back_se = {
+                                x + 1, y, z, r, g, b, 0, 0, -1
+                            };
+
+                            local_vertices[vertex_count++] = back_sw;
+                            local_vertices[vertex_count++] = back_se;
+                            local_vertices[vertex_count++] = back_ne;
+                            local_vertices[vertex_count++] = back_sw;
+                            local_vertices[vertex_count++] = back_se;
+                            local_vertices[vertex_count++] = back_ne;
+                        }
+
+                        ARRAY_append(local_vertex_buffer, local_vertices, vertex_count);
+                    }
+                }
             }
         }
     }
+    *vertices = local_vertex_buffer;
+}
+
+void VXL_create_geometry(struct FbVoxelChunk *chunk, struct FbVoxelVertex **vertices)
+{
+    struct FbVoxelVertex *local_vertices = *vertices;
+
+    for (char x = 0; x < CHUNK_SIZE; x++) {
+        for (char y = 0; y < CHUNK_SIZE; y++) {
+            for (char z = 0; z < CHUNK_SIZE; z++) {
+                struct FbVoxel voxel = VXL_chunk_get(chunk, x & VIRTUAL_CHUNK_MASK, y & VIRTUAL_CHUNK_MASK, z & VIRTUAL_CHUNK_MASK);
+
+                unsigned char r = 255, g = 128, b = 64;
+                struct FbVoxelVertex bot_sw = {
+                    x, y, z, r, g, b, 0, -1, 0
+                };
+                struct FbVoxelVertex bot_nw = {
+                    x, y, z + 1, r, g, b, 0, -1, 0
+                };
+                struct FbVoxelVertex bot_ne = {
+                    x + 1, y, z + 1, r, g, b, 0, -1, 0
+                };
+                struct FbVoxelVertex bot_se = {
+                    x + 1, y, z, r, g, b, 0, -1, 0
+                };
+
+                struct FbVoxelVertex top_sw = {
+                    x, y+1, z, r, g, b, 0, 1, 0
+                };
+                struct FbVoxelVertex top_nw = {
+                    x, y+1, z + 1, r, g, b, 0, 1, 0
+                };
+                struct FbVoxelVertex top_ne = {
+                    x + 1, y+1, z + 1, r, g, b, 0, 1, 0
+                };
+                struct FbVoxelVertex top_se = {
+                    x + 1, y+1, z, r, g, b, 0, 1, 0
+                };
+
+                struct FbVoxelVertex left_sw = {
+                    x, y, z, r, g, b, -1, 0, 0
+                };
+                struct FbVoxelVertex left_nw = {
+                    x, y+1, z, r, g, b, -1, 0, 0
+                };
+                struct FbVoxelVertex left_ne = {
+                    x + 1, y+1, z, r, g, b, -1, 0, 0
+                };
+                struct FbVoxelVertex left_se = {
+                    x + 1, y, z, r, g, b, -1, 0, 0
+                };
+
+                struct FbVoxelVertex right_sw = {
+                    x, y, z+1, r, g, b, 1, 0, 0
+                };
+                struct FbVoxelVertex right_nw = {
+                    x, y+1, z+1, r, g, b, 1, 0, 0
+                };
+                struct FbVoxelVertex right_ne = {
+                    x + 1, y+1, z+1, r, g, b, 1, 0, 0
+                };
+                struct FbVoxelVertex right_se = {
+                    x + 1, y, z+1, r, g, b, 1, 0, 0
+                };
+
+                struct FbVoxelVertex front_sw = {
+                    x, y, z+1, r, g, b, 0, 0, 1
+                };
+                struct FbVoxelVertex front_nw = {
+                    x, y+1, z+1, r, g, b, 0, 0, 1
+                };
+                struct FbVoxelVertex front_ne = {
+                    x + 1, y+1, z+1, r, g, b, 0, 0, 1
+                };
+                struct FbVoxelVertex front_se = {
+                    x + 1, y, z+1, r, g, b, 0, 0, 1
+                };
+
+                struct FbVoxelVertex back_sw = {
+                    x, y, z, r, g, b, 0, 0, -1
+                };
+                struct FbVoxelVertex back_nw = {
+                    x, y+1, z, r, g, b, 0, 0, -1
+                };
+                struct FbVoxelVertex back_ne = {
+                    x + 1, y+1, z, r, g, b, 0, 0, -1
+                };
+                struct FbVoxelVertex back_se = {
+                    x + 1, y, z, r, g, b, 0, 0, -1
+                };
+
+                ARRAY_push(local_vertices, bot_sw);
+                ARRAY_push(local_vertices, bot_se);
+                ARRAY_push(local_vertices, bot_ne);
+                ARRAY_push(local_vertices, bot_sw);
+                ARRAY_push(local_vertices, bot_se);
+                ARRAY_push(local_vertices, bot_ne);
+
+                ARRAY_push(local_vertices, top_sw);
+                ARRAY_push(local_vertices, top_se);
+                ARRAY_push(local_vertices, top_ne);
+                ARRAY_push(local_vertices, top_sw);
+                ARRAY_push(local_vertices, top_se);
+                ARRAY_push(local_vertices, top_ne);
+
+                ARRAY_push(local_vertices, left_sw);
+                ARRAY_push(local_vertices, left_se);
+                ARRAY_push(local_vertices, left_ne);
+                ARRAY_push(local_vertices, left_sw);
+                ARRAY_push(local_vertices, left_se);
+                ARRAY_push(local_vertices, left_ne);
+
+                ARRAY_push(local_vertices, right_sw);
+                ARRAY_push(local_vertices, right_se);
+                ARRAY_push(local_vertices, right_ne);
+                ARRAY_push(local_vertices, right_sw);
+                ARRAY_push(local_vertices, right_se);
+                ARRAY_push(local_vertices, right_ne);
+
+                ARRAY_push(local_vertices, front_sw);
+                ARRAY_push(local_vertices, front_se);
+                ARRAY_push(local_vertices, front_ne);
+                ARRAY_push(local_vertices, front_sw);
+                ARRAY_push(local_vertices, front_se);
+                ARRAY_push(local_vertices, front_ne);
+
+                ARRAY_push(local_vertices, back_sw);
+                ARRAY_push(local_vertices, back_se);
+                ARRAY_push(local_vertices, back_ne);
+                ARRAY_push(local_vertices, back_sw);
+                ARRAY_push(local_vertices, back_se);
+                ARRAY_push(local_vertices, back_ne);
+            }
+        }
+    }
+
+    *vertices = local_vertices;
 }

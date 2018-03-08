@@ -43,4 +43,5 @@ void VXL_set_voxel(struct FbVoxelWorld *world, int x, int y, int z, struct FbVox
 struct FbVoxel VXL_find_voxel(struct FbVoxelWorld *world, int x, int y, int z);
 void VXL_find_chunk(struct FbVoxelWorld *world, int x, int y, int z, struct FbVoxelChunk **chunk);
 
-void VXL_create_geometry(struct FbVoxelChunk *chunk, struct FbVoxelVertex *vertices);
+void VXL_create_geometry(struct FbVoxelChunk *chunk, struct FbVoxelVertex **vertices);
+void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **vertices);
