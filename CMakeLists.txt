@@ -15,10 +15,13 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/
 
 set(FISHBALL_SOURCES
     src/main.c
+    src/array.h
     src/window.h
     src/window.c
     src/fbgl.h
     src/fbgl.c
+    src/voxel.h
+    src/voxel.c
 )
 
 add_executable(fishball ${FISHBALL_SOURCES})
