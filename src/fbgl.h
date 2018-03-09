@@ -1,5 +1,8 @@
 #define __gl_h_
 
+#ifndef FB_GL_H
+#define FB_GL_H
+
 #include <stdint.h>
 
 typedef unsigned int GLenum;
@@ -39,6 +42,15 @@ extern void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 extern void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 extern void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 
+extern void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+extern void   (*FB_glDisableVertexAttribArray)(GLuint index);
+extern void   (*FB_glEnableVertexAttribArray)(GLuint index);
+extern void   (*FB_glBindVertexArray)(GLuint array);
+extern void   (*FB_glDeleteVertexArrays)(GLsizei n, const GLuint *arrays);
+extern void   (*FB_glGenVertexArrays)(GLsizei n, GLuint *arrays);
+
+extern void   (*FB_glLinkProgram)(GLuint program);
+extern void   (*FB_glShaderSource)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
 extern void   (*FB_glAttachShader)(GLuint program, GLuint shader);
 extern void   (*FB_glCompileShader)(GLuint shader);
 extern GLuint (*FB_glCreateProgram)(void);
@@ -62,6 +74,15 @@ extern void   (*FB_glUseProgram)(GLuint program);
 #define glBindBufferRange FB_glBindBufferRange
 #define glBindBufferBase FB_glBindBufferBase
 
+#define glVertexAttribPointer FB_glVertexAttribPointer
+#define glDisableVertexAttribArray FB_glDisableVertexAttribArray
+#define glEnableVertexAttribArray FB_glEnableVertexAttribArray
+#define glBindVertexArray FB_glBindVertexArray
+#define glDeleteVertexArrays FB_glDeleteVertexArrays
+#define glGenVertexArrays FB_glGenVertexArrays
+
+#define glLinkProgram FB_glLinkProgram
+#define glShaderSource FB_glShaderSource
 #define glAttachShader FB_glAttachShader
 #define glCompileShader FB_glCompileShader
 #define glCreateProgram FB_glCreateProgram
@@ -1216,3 +1237,4 @@ extern void   (*FB_glUseProgram)(GLuint program);
 #define GL_CONTEXT_RELEASE_BEHAVIOR 0x82FB
 #define GL_CONTEXT_RELEASE_BEHAVIOR_FLUSH 0x82FC
 
+#endif /* FB_GL_H */

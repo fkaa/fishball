@@ -16,6 +16,8 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/
 set(FISHBALL_SOURCES
     src/main.c
     src/array.h
+    src/file.h
+    src/file.c
     src/window.h
     src/window.c
     src/gfx.h

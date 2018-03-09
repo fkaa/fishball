@@ -29,6 +29,15 @@ void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 
+void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
+void   (*FB_glDisableVertexAttribArray)(GLuint index);
+void   (*FB_glEnableVertexAttribArray)(GLuint index);
+void   (*FB_glBindVertexArray)(GLuint array);
+void   (*FB_glDeleteVertexArrays)(GLsizei n, const GLuint *arrays);
+void   (*FB_glGenVertexArrays)(GLsizei n, GLuint *arrays);
+
+void   (*FB_glLinkProgram)(GLuint program);
+void   (*FB_glShaderSource)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
 void   (*FB_glAttachShader)(GLuint program, GLuint shader);
 void   (*FB_glCompileShader)(GLuint shader);
 GLuint (*FB_glCreateProgram)(void);
@@ -70,6 +79,15 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glBindBufferRange);
     LoadProc(glBindBufferBase);
 
+    LoadProc(glVertexAttribPointer);
+    LoadProc(glDisableVertexAttribArray);
+    LoadProc(glEnableVertexAttribArray);
+    LoadProc(glBindVertexArray);
+    LoadProc(glDeleteVertexArrays);
+    LoadProc(glGenVertexArrays);
+
+    LoadProc(glLinkProgram);
+    LoadProc(glShaderSource);
     LoadProc(glAttachShader);
     LoadProc(glCompileShader);
     LoadProc(glCreateProgram);
