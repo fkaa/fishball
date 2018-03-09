@@ -2,6 +2,7 @@
 #include "fbgl.h"
 #include "windows.h"
 #include "GLFW\glfw3.h"
+#include <stdio.h>
 
 static void FBGL_load_library(void** lib)
 {
@@ -18,13 +19,28 @@ static void FBGL_close_library(void *lib)
     FreeLibrary(lib);
 }
 
-void  (*FB_glEnable)();
-void  (*FB_glDisable)();
+void   (*FB_glEnable)();
+void   (*FB_glDisable)();
 
-void  (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
-void  (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
-void  (*FB_glBindBuffer)(GLenum target, GLuint buffer);
-void *(*FB_glMapBuffer)(GLenum target, GLenum access);
+void   (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
+void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
+void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
+void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
+void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
+
+void   (*FB_glAttachShader)(GLuint program, GLuint shader);
+void   (*FB_glCompileShader)(GLuint shader);
+GLuint (*FB_glCreateProgram)(void);
+GLuint (*FB_glCreateShader)(GLenum type);
+void   (*FB_glDeleteProgram)(GLuint program);
+void   (*FB_glDeleteShader)(GLuint shader);
+
+void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
+void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+void   (*FB_glUseProgram)(GLuint program);
 
 enum FbErrorCode FBGL_load_procs()
 {
@@ -40,13 +56,32 @@ enum FbErrorCode FBGL_load_procs()
         // err
     }
 
-    FB_glEnable = FBGL_GetProcAddress("glEnable");
-    FB_glDisable = FBGL_GetProcAddress("glDisable");
+#define LoadProc(name) \
+    if ((FB_##name = FBGL_GetProcAddress(#name)) == 0) \
+        printf("Failed to load FBGL proc: %s\n", #name)
+        
+    LoadProc(glEnable);
+    LoadProc(glDisable);
 
-    FB_glGenBuffer = FBGL_GetProcAddress("glGenBuffers");
-    FB_glDeleteBuffers = FBGL_GetProcAddress("glDeleteBuffers");
-    FB_glBindBuffer = FBGL_GetProcAddress("glBindBuffer");
-    FB_glMapBuffer = FBGL_GetProcAddress("glMapBuffer");
+    LoadProc(glGenBuffer);
+    LoadProc(glDeleteBuffers);
+    LoadProc(glBindBuffer);
+    LoadProc(glMapBuffer);
+    LoadProc(glBindBufferRange);
+    LoadProc(glBindBufferBase);
+
+    LoadProc(glAttachShader);
+    LoadProc(glCompileShader);
+    LoadProc(glCreateProgram);
+    LoadProc(glCreateShader);
+    LoadProc(glDeleteProgram);
+    LoadProc(glDeleteShader);
+
+    LoadProc(glGetProgramiv);
+    LoadProc(glGetProgramInfoLog);
+    LoadProc(glGetShaderiv);
+    LoadProc(glGetShaderInfoLog);
+    LoadProc(glUseProgram);
 
     FBGL_close_library(lib);
 

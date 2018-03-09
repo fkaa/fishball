@@ -1,34 +1,12 @@
-#define _CRTDBG_MAP_ALLOC  
-#include <stdlib.h>  
-#include <crtdbg.h>  
 #include "window.h"
 #include "fbgl.h"
 #include "voxel.h"
 #include "array.h"
-#include <windows.h>
-double PCFreq = 0.0;
-__int64 CounterStart = 0;
+#include "gfx.h"
 
-void StartCounter()
-{
-    LARGE_INTEGER li;
-    if (!QueryPerformanceFrequency(&li))
-        printf("QueryPerformanceFrequency failed!\n");
-
-    PCFreq = (double)(li.QuadPart) / 1000.0;
-
-    QueryPerformanceCounter(&li);
-    CounterStart = li.QuadPart;
-}
-double GetCounter()
-{
-    LARGE_INTEGER li;
-    QueryPerformanceCounter(&li);
-    return (double)(li.QuadPart - CounterStart) / PCFreq;
-}
+#include <stdlib.h>  
 
 int main() {
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     struct FbWindow *wnd = 0;
     window_new((struct FbWindowConfig) { .width = 800, .height = 600, .title = "Test Window" }, &wnd);
     window_cxt(wnd);
@@ -52,15 +30,16 @@ int main() {
     }
     struct FbVoxelChunk *chunk = 0;
     VXL_find_chunk(world, 0, 0, 0, &chunk);
-    StartCounter();
-        struct FbVoxelVertex *vertices = 0;
-        VXL_create_geometry(chunk, &vertices);
-    printf("%fms, %d\n", GetCounter(), ARRAY_size(vertices));
-    StartCounter();
-        vertices = 0;
-        VXL_create_geometry2(chunk, &vertices);
-    printf("%fms, %d\n", GetCounter(), ARRAY_size(vertices));
+    struct FbVoxelVertex *vertices = 0;
+    VXL_create_geometry2(chunk, &vertices);
     FBGL_load_procs();
+
+    struct FbGfxShader *shader = 0;
+    struct FbGfxShaderFile files[] = {
+        { .path = "asset/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
+        { .path = "asset/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
+    };
+    GFX_load_shader_files(files, 2, &shader);
 
     while (window_open(wnd)) {
         //glEnable(GL_BLEND);

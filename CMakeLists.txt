@@ -18,6 +18,8 @@ set(FISHBALL_SOURCES
     src/array.h
     src/window.h
     src/window.c
+    src/gfx.h
+    src/gfx.c
     src/fbgl.h
     src/fbgl.c
     src/voxel.h

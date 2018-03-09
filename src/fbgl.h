@@ -1,5 +1,7 @@
 #define __gl_h_
 
+#include <stdint.h>
+
 typedef unsigned int GLenum;
 typedef unsigned char GLboolean;
 typedef void GLvoid;
@@ -13,6 +15,8 @@ typedef int GLsizei;
 typedef float GLfloat;
 typedef double GLdouble;
 typedef char GLchar;
+typedef ptrdiff_t GLintptr;
+typedef ptrdiff_t GLsizeiptr;
 
 enum FbErrorCode;
 
@@ -28,10 +32,25 @@ typedef void (GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei 
 extern void  (*FB_glEnable)();
 extern void  (*FB_glDisable)();
 
-extern void  (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
-extern void  (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
-extern void  (*FB_glBindBuffer)(GLenum target, GLuint buffer);
-extern void *(*FB_glMapBuffer)(GLenum target, GLenum access);
+extern void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
+extern void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
+extern void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
+extern void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
+extern void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
+extern void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
+
+extern void   (*FB_glAttachShader)(GLuint program, GLuint shader);
+extern void   (*FB_glCompileShader)(GLuint shader);
+extern GLuint (*FB_glCreateProgram)(void);
+extern GLuint (*FB_glCreateShader)(GLenum type);
+extern void   (*FB_glDeleteProgram)(GLuint program);
+extern void   (*FB_glDeleteShader)(GLuint shader);
+
+extern void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
+extern void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+extern void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
+extern void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
+extern void   (*FB_glUseProgram)(GLuint program);
 
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
@@ -40,6 +59,21 @@ extern void *(*FB_glMapBuffer)(GLenum target, GLenum access);
 #define glDeleteBuffers FB_glDeleteBuffers
 #define glBindBuffer FB_glBindBuffer
 #define glMapBuffer FB_glMapBuffer
+#define glBindBufferRange FB_glBindBufferRange
+#define glBindBufferBase FB_glBindBufferBase
+
+#define glAttachShader FB_glAttachShader
+#define glCompileShader FB_glCompileShader
+#define glCreateProgram FB_glCreateProgram
+#define glCreateShader FB_glCreateShader
+#define glDeleteProgram FB_glDeleteProgram
+#define glDeleteShader FB_glDeleteShader
+
+#define glGetProgramiv FB_glGetProgramiv
+#define glGetProgramInfoLog FB_glGetProgramInfoLog
+#define glGetShaderiv FB_glGetShaderiv
+#define glGetShaderInfoLog FB_glGetShaderInfoLog
+#define glUseProgram FB_glUseProgram
 
 // enums
 #define GL_DEPTH_BUFFER_BIT 0x00000100
