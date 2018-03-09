@@ -67,7 +67,7 @@ extern void   (*FB_glUseProgram)(GLuint program);
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
 
-#define glGenBuffer FB_glGenBuffer
+#define glGenBuffers FB_glGenBuffers
 #define glDeleteBuffers FB_glDeleteBuffers
 #define glBindBuffer FB_glBindBuffer
 #define glMapBuffer FB_glMapBuffer

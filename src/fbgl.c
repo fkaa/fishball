@@ -22,7 +22,7 @@ static void FBGL_close_library(void *lib)
 void   (*FB_glEnable)();
 void   (*FB_glDisable)();
 
-void   (*FB_glGenBuffer)(GLsizei n, GLuint *buffers);
+void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
 void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
@@ -72,7 +72,7 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glEnable);
     LoadProc(glDisable);
 
-    LoadProc(glGenBuffer);
+    LoadProc(glGenBuffers);
     LoadProc(glDeleteBuffers);
     LoadProc(glBindBuffer);
     LoadProc(glMapBuffer);

@@ -51,3 +51,13 @@ enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 c
 
     return FB_ERR_NONE;
 }
+
+void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer)
+{
+    glGenBuffers(1, &buffer->buffer);
+    
+    if (desc->data && desc->length > 0) {
+        // BufferData
+        
+    }
+}

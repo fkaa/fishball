@@ -49,6 +49,13 @@ int main() {
     struct FbGfxInputLayout layout = {0};
     GFX_create_input_layout(desc, 3, &layout);
 
+    struct FbGfxBufferDesc buffer_desc = {
+        .data = (u8*)vertices,
+        .length = sizeof(*vertices) * ARRAY_size(vertices)
+    };
+    struct FbGfxBuffer buffer = {0};
+    GFX_create_buffer(&buffer_desc, &buffer);
+
     while (window_open(wnd)) {
         //glEnable(GL_BLEND);
         window_swap(wnd);
