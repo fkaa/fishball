@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-enum FbErrorCode FILE_read_whole(const char *path, char **string)
+enum FbErrorCode FILE_read_whole(const char *path, char **string, u32 *len)
 {
     FILE *f = 0;
     errno_t error = fopen_s(&f, path, "rb");
@@ -22,6 +22,7 @@ enum FbErrorCode FILE_read_whole(const char *path, char **string)
 
     s[fsize] = 0;
 
+    *len = fsize;
     *string = s;
 
     return FB_ERR_NONE;

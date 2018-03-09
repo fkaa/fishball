@@ -4,8 +4,8 @@
 #include "shared/types.h"
 
 enum FbGfxShaderType {
-    FB_GFX_VERTEX_SHADER,
-    FB_GFX_PIXEL_SHADER,
+    FB_GFX_VERTEX_SHADER = 0x8B31,
+    FB_GFX_PIXEL_SHADER = 0x8B30,
 };
 
 struct FbGfxShaderFile {
@@ -38,9 +38,29 @@ struct FbGfxShader {
     u32 program;
 };
 
+enum FbGfxBufferType {
+    FB_GFX_VERTEX_BUFFER = 0x8892,
+    FB_GFX_INDEX_BUFFER = 0x8893,
+    FB_GFX_UNIFORM_BUFFER = 0x8A11
+};
+
+enum FbGfxBufferUsage {
+    FB_GFX_USAGE_STREAM_WRITE = 0x88E0,
+    FB_GFX_USAGE_STREAM_READ = 0x88E1,
+    FB_GFX_USAGE_STREAM_COPY = 0x88E2,
+    FB_GFX_USAGE_IMMUTABLE_WRITE = 0x88E4,
+    FB_GFX_USAGE_IMMUTABLE_READ = 0x88E5,
+    FB_GFX_USAGE_IMMUTABLE_COPY = 0x88E6,
+    FB_GFX_USAGE_DYNAMIC_WRITE = 0x88E8,
+    FB_GFX_USAGE_DYNAMIC_READ = 0x88E9,
+    FB_GFX_USAGE_DYNAMIC_COPY = 0x88EA,
+};
+
 struct FbGfxBufferDesc {
     u8 *data;
     u32 length;
+    enum FbGfxBufferType type;
+    enum FbGfxBufferUsage usage;
 };
 
 struct FbGfxBuffer {

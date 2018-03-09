@@ -13,29 +13,45 @@ enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned i
     for (unsigned int i = 0; i < count; ++i) {
         struct FbGfxShaderFile file = files[i];
 
-        // TODO(fkaa): give FbGfxShaderType same values as GL
-        GLenum type;
-        switch (file.type) {
-            case FB_GFX_VERTEX_SHADER:
-                type = GL_VERTEX_SHADER;
-                break;
-            case FB_GFX_PIXEL_SHADER:
-                type = GL_FRAGMENT_SHADER;
-                break;
-        }
-
         char *source = 0;
+        u32 source_length = 0;
         // TODO(fkaa): err, free()
-        FILE_read_whole(file.path, &source);
-        int source_count = 1;
+        FILE_read_whole(file.path, &source, &source_length);
 
         GLuint shader = glCreateShader(file.type);
-        glShaderSource(shader, 1, &source, &source_count);
+        glShaderSource(shader, 1, &source, &source_length);
         glCompileShader(shader);
+
+        GLint compile_status = 0;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
+        if (!compile_status) {
+            u32 len = 0;
+            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
+            char *log = malloc(len + 1);
+            glGetShaderInfoLog(shader, len, 0, log);
+
+            printf("GFX: program compile error: %s\n", log);
+            free(log);
+        }
+
         glAttachShader(program, shader);
     }
 
     glLinkProgram(program);
+
+    GLint link_status = 0;
+    glGetProgramiv(program, GL_LINK_STATUS, &link_status);
+    if (!link_status) {
+        u32 len = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
+        char *log = malloc(len + 1);
+        glGetProgramInfoLog(program, len, 0, log);
+
+        printf("GFX: program link error: %s\n", log);
+        free(log);
+    }
+
+    shader->program = program;
 
     return FB_ERR_NONE;
 }
@@ -55,9 +71,6 @@ enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 c
 void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer)
 {
     glGenBuffers(1, &buffer->buffer);
-    
-    if (desc->data && desc->length > 0) {
-        // BufferData
-        
-    }
+    glBindBuffer(buffer->buffer, desc->type);
+    glBufferData(desc->type, desc->length, desc->data, desc->usage);
 }

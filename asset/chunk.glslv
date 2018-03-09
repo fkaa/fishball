@@ -1,4 +1,4 @@
-#version 410 core
+#version 150 core
 
 in vec3 PositionVS;
 in vec3 ColorVS;
@@ -7,10 +7,10 @@ in vec3 NormalVS;
 out vec3 ColorPS;
 out vec3 NormalPS;
 
-layout(binding = 0) uniform Camera
+uniform Camera
 {
     mat4 ModelViewProjection;
-}
+};
 
 void main()
 {

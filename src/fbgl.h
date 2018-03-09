@@ -34,6 +34,7 @@ typedef void (GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei 
 // api functions
 extern void  (*FB_glEnable)();
 extern void  (*FB_glDisable)();
+extern GLubyte *(*FB_glGetString)(GLenum name);
 
 extern void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 extern void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
@@ -41,6 +42,7 @@ extern void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
 extern void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 extern void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 extern void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
+extern void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
 
 extern void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
 extern void   (*FB_glDisableVertexAttribArray)(GLuint index);
@@ -64,8 +66,12 @@ extern void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
 extern void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 extern void   (*FB_glUseProgram)(GLuint program);
 
+extern void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+extern void   (*FB_glClear)(GLenum targets);
+
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
+#define glGetString FB_glGetString
 
 #define glGenBuffers FB_glGenBuffers
 #define glDeleteBuffers FB_glDeleteBuffers
@@ -73,6 +79,7 @@ extern void   (*FB_glUseProgram)(GLuint program);
 #define glMapBuffer FB_glMapBuffer
 #define glBindBufferRange FB_glBindBufferRange
 #define glBindBufferBase FB_glBindBufferBase
+#define glBufferData FB_glBufferData
 
 #define glVertexAttribPointer FB_glVertexAttribPointer
 #define glDisableVertexAttribArray FB_glDisableVertexAttribArray
@@ -95,6 +102,9 @@ extern void   (*FB_glUseProgram)(GLuint program);
 #define glGetShaderiv FB_glGetShaderiv
 #define glGetShaderInfoLog FB_glGetShaderInfoLog
 #define glUseProgram FB_glUseProgram
+
+#define glClearColor FB_glClearColor
+#define glClear FB_glClear
 
 // enums
 #define GL_DEPTH_BUFFER_BIT 0x00000100

@@ -21,6 +21,7 @@ static void FBGL_close_library(void *lib)
 
 void   (*FB_glEnable)();
 void   (*FB_glDisable)();
+GLubyte *(*FB_glGetString)(GLenum name);
 
 void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
@@ -28,6 +29,7 @@ void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
 void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
+void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
 
 void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
 void   (*FB_glDisableVertexAttribArray)(GLuint index);
@@ -51,10 +53,13 @@ void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
 void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glUseProgram)(GLuint program);
 
+void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
+void   (*FB_glClear)(GLenum targets);
+
 enum FbErrorCode FBGL_load_procs()
 {
     void *lib = 0;
-    FBGL_load_library(&lib);
+    //FBGL_load_library(&lib);
     if (!lib) {
         // err
     }
@@ -71,6 +76,7 @@ enum FbErrorCode FBGL_load_procs()
         
     LoadProc(glEnable);
     LoadProc(glDisable);
+    LoadProc(glGetString);
 
     LoadProc(glGenBuffers);
     LoadProc(glDeleteBuffers);
@@ -78,6 +84,7 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glMapBuffer);
     LoadProc(glBindBufferRange);
     LoadProc(glBindBufferBase);
+    LoadProc(glBufferData);
 
     LoadProc(glVertexAttribPointer);
     LoadProc(glDisableVertexAttribArray);
@@ -101,7 +108,15 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glGetShaderInfoLog);
     LoadProc(glUseProgram);
 
-    FBGL_close_library(lib);
+    LoadProc(glClearColor);
+    LoadProc(glClear);
+
+    char *version = glGetString(GL_VERSION);
+    char *vendor = glGetString(GL_VENDOR);
+
+    printf("FBGL: %s %s\n", vendor, version);
+
+    //FBGL_close_library(lib);
 
     return FB_ERR_NONE;
 }

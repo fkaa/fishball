@@ -10,6 +10,7 @@ int main() {
     struct FbWindow *wnd = 0;
     window_new((struct FbWindowConfig) { .width = 800, .height = 600, .title = "Test Window" }, &wnd);
     window_cxt(wnd);
+    FBGL_load_procs();
 
     struct FbVoxelWorldConfig cfg = {
         .chunk_count_x = 1,
@@ -32,7 +33,6 @@ int main() {
     VXL_find_chunk(world, 0, 0, 0, &chunk);
     struct FbVoxelVertex *vertices = 0;
     VXL_create_geometry2(chunk, &vertices);
-    FBGL_load_procs();
 
     struct FbGfxShader shader = {0};
     struct FbGfxShaderFile files[] = {
@@ -51,12 +51,16 @@ int main() {
 
     struct FbGfxBufferDesc buffer_desc = {
         .data = (u8*)vertices,
-        .length = sizeof(*vertices) * ARRAY_size(vertices)
+        .length = sizeof(*vertices) * ARRAY_size(vertices),
+        .type = FB_GFX_VERTEX_BUFFER,
+        .usage = FB_GFX_USAGE_IMMUTABLE_READ
     };
     struct FbGfxBuffer buffer = {0};
     GFX_create_buffer(&buffer_desc, &buffer);
 
     while (window_open(wnd)) {
+        glClearColor(1.f, 0.2f, 0.4f, 1.f);
+        glClear(GL_COLOR_BUFFER_BIT);
         //glEnable(GL_BLEND);
         window_swap(wnd);
         window_poll(wnd);
