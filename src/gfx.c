@@ -4,12 +4,10 @@
 
 #include "shared/error.h"
 
+#include <stdlib.h>
+#include <string.h>
 
-struct FbGfxShader {
-    GLuint program;
-};
-
-enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader **shader)
+enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader *shader)
 {
     GLuint program = glCreateProgram();
     for (unsigned int i = 0; i < count; ++i) {
@@ -38,6 +36,18 @@ enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned i
     }
 
     glLinkProgram(program);
+
+    return FB_ERR_NONE;
+}
+
+enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout)
+{
+    struct FbGfxInputLayout l = {0};
+    glGenVertexArrays(1, &l.vao);
+    l.desc = malloc(count * sizeof(*entries));
+    l.count = count;
+    memcpy_s(l.desc, count * sizeof(*entries), entries, count * sizeof(*entries));
+    *layout = l;
 
     return FB_ERR_NONE;
 }

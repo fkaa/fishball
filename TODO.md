@@ -2,6 +2,7 @@
 
 ## Fishball
 
+    [ ] switch to using `shared\types.h` for primitive types
     [ ] add `#ifndef` header guards for all header files
     [ ] better errors
         [ ] descriptions (global TLS char array?)

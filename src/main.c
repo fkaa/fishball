@@ -34,12 +34,20 @@ int main() {
     VXL_create_geometry2(chunk, &vertices);
     FBGL_load_procs();
 
-    struct FbGfxShader *shader = 0;
+    struct FbGfxShader shader = {0};
     struct FbGfxShaderFile files[] = {
         { .path = "asset/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
         { .path = "asset/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
     };
     GFX_load_shader_files(files, 2, &shader);
+
+    struct FbGfxVertexEntry desc[] = {
+        { .index = 0, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 0 },
+        { .index = 1, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 3 * sizeof(u8) },
+        { .index = 2, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 6 * sizeof(u8) },
+    };
+    struct FbGfxInputLayout layout = {0};
+    GFX_create_input_layout(desc, 3, &layout);
 
     while (window_open(wnd)) {
         //glEnable(GL_BLEND);

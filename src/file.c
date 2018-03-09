@@ -16,11 +16,13 @@ enum FbErrorCode FILE_read_whole(const char *path, char **string)
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    *string = malloc(fsize + 1);
-    fread(string, fsize, 1, f);
+    char *s = malloc(fsize + 1);
+    fread(s, fsize, 1, f);
     fclose(f);
 
-    string[fsize] = 0;
+    s[fsize] = 0;
+
+    *string = s;
 
     return FB_ERR_NONE;
 }
