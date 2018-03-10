@@ -19,6 +19,9 @@ static void FBGL_close_library(void *lib)
     FreeLibrary(lib);
 }
 
+void   (*FB_glDebugMessageCallback)(GLDEBUGPROC callback, const void *userParam);
+GLuint (*FB_glGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
+
 void   (*FB_glEnable)();
 void   (*FB_glDisable)();
 GLubyte *(*FB_glGetString)(GLenum name);
@@ -47,6 +50,7 @@ GLuint (*FB_glCreateShader)(GLenum type);
 void   (*FB_glDeleteProgram)(GLuint program);
 void   (*FB_glDeleteShader)(GLuint shader);
 
+GLint  (*FB_glGetAttribLocation)(GLuint program, const GLchar *name);
 void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
@@ -55,6 +59,21 @@ void   (*FB_glUseProgram)(GLuint program);
 
 void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 void   (*FB_glClear)(GLenum targets);
+
+void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
+
+void FBGL_debug_callback(GLenum source,
+                         GLenum type,
+                         GLuint id,
+                         GLenum severity,
+                         GLsizei length,
+                         const GLchar* message,
+                         const void* userParam)
+{
+    fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+}
 
 enum FbErrorCode FBGL_load_procs()
 {
@@ -74,6 +93,9 @@ enum FbErrorCode FBGL_load_procs()
     if ((FB_##name = FBGL_GetProcAddress(#name)) == 0) \
         printf("Failed to load FBGL proc: %s\n", #name)
         
+    LoadProc(glDebugMessageCallback);
+    LoadProc(glGetDebugMessageLog);
+
     LoadProc(glEnable);
     LoadProc(glDisable);
     LoadProc(glGetString);
@@ -102,6 +124,7 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glDeleteProgram);
     LoadProc(glDeleteShader);
 
+    LoadProc(glGetAttribLocation);
     LoadProc(glGetProgramiv);
     LoadProc(glGetProgramInfoLog);
     LoadProc(glGetShaderiv);
@@ -110,11 +133,15 @@ enum FbErrorCode FBGL_load_procs()
 
     LoadProc(glClearColor);
     LoadProc(glClear);
+    LoadProc(glDrawArrays);
 
     char *version = glGetString(GL_VERSION);
     char *vendor = glGetString(GL_VENDOR);
 
     printf("FBGL: %s %s\n", vendor, version);
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback((GLDEBUGPROC) FBGL_debug_callback, 0);
 
     //FBGL_close_library(lib);
 

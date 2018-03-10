@@ -13,7 +13,7 @@ struct FbArrayHeader {
 #define ARRAY_full(array) (ARRAY_size(array) >= ARRAY_capacity(array))
 #define ARRAY_append(array, items, n) \
     ARRAY_size(array) + (n) >= ARRAY_capacity(array) ? array = ARRAY_grow(array, sizeof(*array), (n)) : 0; \
-    for (unsigned int i = 0; i < (n); ++i) array[FB_ARRAY_HEADER(array)->size + i] = (items)[i]; FB_ARRAY_HEADER(array)->size += i 
+    for (unsigned int i = 0, sz = FB_ARRAY_HEADER(array)->size; i < (n); ++i) array[sz + i] = (items)[i]; FB_ARRAY_HEADER(array)->size += (n) 
     
 #define ARRAY_push(array, item) \
     ARRAY_full(array) ? array = ARRAY_grow(array, sizeof(*array), 1) : 0, \

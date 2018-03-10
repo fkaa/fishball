@@ -42,9 +42,9 @@ int main() {
     GFX_load_shader_files(files, 2, &shader);
 
     struct FbGfxVertexEntry desc[] = {
-        { .index = 0, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 0 },
-        { .index = 1, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 3 * sizeof(u8) },
-        { .index = 2, .type = FB_GFX_BYTE, .count = 3, .stride = 3 * sizeof(u8), .offset = 6 * sizeof(u8) },
+        { .name = "PositionVS", .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 0 },
+        { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 4 * sizeof(u8) },
+        { .name = "NormalVS",   .type = FB_GFX_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 8 * sizeof(u8) },
     };
     struct FbGfxInputLayout layout = {0};
     GFX_create_input_layout(desc, 3, &layout);
@@ -59,8 +59,13 @@ int main() {
     GFX_create_buffer(&buffer_desc, &buffer);
 
     while (window_open(wnd)) {
-        glClearColor(1.f, 0.2f, 0.4f, 1.f);
+        glClearColor(.2f, .22f, .4f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shader.program);
+        GFX_set_buffers(&shader, &buffer, 1, &layout);
+        GFX_draw(36);// ARRAY_size(vertices) / 3);
+
         //glEnable(GL_BLEND);
         window_swap(wnd);
         window_poll(wnd);

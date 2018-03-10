@@ -16,22 +16,23 @@ struct FbGfxShaderFile {
 enum FbGfxDataType {
     FB_GFX_FLOAT = 0,
     FB_GFX_INT32,
-    FB_GFX_BYTE,
+    FB_GFX_BYTE = 0x1400,
+    FB_GFX_UNSIGNED_BYTE = 0x1401,
 };
 
 struct FbGfxVertexEntry {
-    u32 index;
+    char *name;
     enum FbGfxDataType type;
     u32 count;
     u32 stride;
     u32 offset;
+    bool normalized;
 };
-
 
 struct FbGfxInputLayout {
     u32 vao;
     u32 count;
-    struct FbGfxVertexArrayEntry *desc;
+    struct FbGfxVertexEntry *desc;
 };
 
 struct FbGfxShader {
@@ -72,5 +73,7 @@ enum FbErrorCode;
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, u32 count, struct FbGfxShader *shader);
 enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout);
 void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer);
+void GFX_set_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout);
+void GFX_draw(u32 vertices);
 
 #endif /* FB_GFX_H */

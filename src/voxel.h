@@ -31,8 +31,11 @@ struct FbVoxelChunk {
 
 struct FbVoxelVertex {
     unsigned char x, y, z;
+    unsigned char _padding0;
     unsigned char r, g, b;
+    unsigned char _padding1;
     unsigned char i, j, k;
+    unsigned char _padding2;
 };
 
 struct FbVoxelWorld;

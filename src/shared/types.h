@@ -2,6 +2,7 @@
 #define FB_SHARED_TYPES_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // opinionated typedefs for less typing
 typedef uint8_t u8;

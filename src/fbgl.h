@@ -26,10 +26,15 @@ enum FbErrorCode;
 extern enum FbErrorCode FBGL_load_procs();
 
 // debug callbacks
-typedef void (GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
-typedef void (GLDEBUGPROCARB)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
-typedef void (GLDEBUGPROCKHR)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
-typedef void (GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei length,const GLchar *message,void *userParam);
+typedef void (*GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void (*GLDEBUGPROCARB)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void (*GLDEBUGPROCKHR)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
+typedef void (*GLDEBUGPROCAMD)(GLuint id,GLenum category,GLenum severity,GLsizei length,const GLchar *message,void *userParam);
+
+extern void   (*FB_glDebugMessageCallback)(GLDEBUGPROC callback, const void *userParam);
+extern GLuint (*FB_glGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog);
+#define glDebugMessageCallback FB_glDebugMessageCallback
+#define glGetDebugMessageLog FB_glGetDebugMessageLog
 
 // api functions
 extern void  (*FB_glEnable)();
@@ -60,6 +65,7 @@ extern GLuint (*FB_glCreateShader)(GLenum type);
 extern void   (*FB_glDeleteProgram)(GLuint program);
 extern void   (*FB_glDeleteShader)(GLuint shader);
 
+extern GLint  (*FB_glGetAttribLocation)(GLuint program, const GLchar *name);
 extern void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 extern void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 extern void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
@@ -68,6 +74,7 @@ extern void   (*FB_glUseProgram)(GLuint program);
 
 extern void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 extern void   (*FB_glClear)(GLenum targets);
+extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
@@ -97,6 +104,7 @@ extern void   (*FB_glClear)(GLenum targets);
 #define glDeleteProgram FB_glDeleteProgram
 #define glDeleteShader FB_glDeleteShader
 
+#define glGetAttribLocation FB_glGetAttribLocation
 #define glGetProgramiv FB_glGetProgramiv
 #define glGetProgramInfoLog FB_glGetProgramInfoLog
 #define glGetShaderiv FB_glGetShaderiv
@@ -105,6 +113,7 @@ extern void   (*FB_glClear)(GLenum targets);
 
 #define glClearColor FB_glClearColor
 #define glClear FB_glClear
+#define glDrawArrays FB_glDrawArrays
 
 // enums
 #define GL_DEPTH_BUFFER_BIT 0x00000100
