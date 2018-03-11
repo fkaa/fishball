@@ -3,6 +3,7 @@
 #include "voxel.h"
 #include "array.h"
 #include "gfx.h"
+#include "math.h"
 
 #include <stdlib.h>  
 
@@ -23,7 +24,8 @@ int main() {
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
-                VXL_set_voxel(world, i, j, k, (struct FbVoxel) { .type = 1 });
+                if (rand() % 8 == 0)
+                VXL_set_voxel(world, i, j, k, (struct FbVoxel) { .type = rand() });
                 //struct FbVoxel voxel = VXL_find_voxel(world, i, j, k);
                 //printf("%d, ", voxel.type);
             }
@@ -44,31 +46,61 @@ int main() {
     struct FbGfxVertexEntry desc[] = {
         { .name = "PositionVS", .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 0 },
         { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 4 * sizeof(u8) },
-        { .name = "NormalVS",   .type = FB_GFX_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 8 * sizeof(u8) },
+        { .name = "NormalVS",   .type = FB_GFX_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 8 * sizeof(u8) },
     };
     struct FbGfxInputLayout layout = {0};
     GFX_create_input_layout(desc, 3, &layout);
 
-    struct FbGfxBufferDesc buffer_desc = {
-        .data = (u8*)vertices,
-        .length = sizeof(*vertices) * ARRAY_size(vertices),
-        .type = FB_GFX_VERTEX_BUFFER,
-        .usage = FB_GFX_USAGE_IMMUTABLE_READ
-    };
     struct FbGfxBuffer buffer = {0};
-    GFX_create_buffer(&buffer_desc, &buffer);
+    {
+        struct FbGfxBufferDesc buffer_desc = {
+            .data = (u8*)vertices,
+            .length = sizeof(*vertices) * ARRAY_size(vertices),
+            .type = FB_GFX_VERTEX_BUFFER,
+            .usage = FB_GFX_USAGE_IMMUTABLE_READ
+        };
+        GFX_create_buffer(&buffer_desc, &buffer);
+    }
 
+    struct FbGfxBuffer camera_buffer = {0};
+    {
+        struct FbGfxBufferDesc buffer_desc = {
+            .data = (u8*)vertices,
+            .length = sizeof(*vertices) * ARRAY_size(vertices),
+            .type = FB_GFX_VERTEX_BUFFER,
+            .usage = FB_GFX_USAGE_IMMUTABLE_READ
+        };
+        GFX_create_buffer(&buffer_desc, &camera_buffer);
+    }
+
+    struct FbGfxBufferBinding bindings[] = {
+        { .name = "Camera", .buffer = &camera_buffer, .offset = 0, .length = 256 }
+    };
+
+    struct FbMatrix4 proj = mat4_perspective_RH(60.f * 3.14f/180.f, 800.f / 600.f, .01f, 100.f);
+    struct FbMatrix4 view = mat4_look_at_RH((struct FbVec3){10, 10, 10}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
+
+    printf("%d\n", ARRAY_size(vertices));
+    glViewport(0, 0, 800, 600);
+    glEnable(GL_DEPTH_TEST);
+    float t = 0.f;
     while (window_open(wnd)) {
+        view = mat4_look_at_RH((struct FbVec3){sinf(t)*50, sin(t*0.2)*70, cosf(t)*50}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
+        struct FbMatrix4 mat = mat4_mul(view, proj);
+        GFX_update_buffer(&camera_buffer, sizeof(mat), &mat);
+
         glClearColor(.2f, .22f, .4f, 1.f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader.program);
-        GFX_set_buffers(&shader, &buffer, 1, &layout);
-        GFX_draw(36);// ARRAY_size(vertices) / 3);
+        GFX_set_vertex_buffers(&shader, &buffer, 1, &layout);
+        GFX_set_uniform_buffers(&shader, bindings, 1);
+        GFX_draw(ARRAY_size(vertices));
 
-        //glEnable(GL_BLEND);
         window_swap(wnd);
         window_poll(wnd);
+
+        t += 0.0001f;
     }
     return 0;
 }

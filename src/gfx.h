@@ -35,6 +35,13 @@ struct FbGfxInputLayout {
     struct FbGfxVertexEntry *desc;
 };
 
+struct FbGfxBufferBinding {
+    char *name;
+    struct FbGfxBuffer *buffer;
+    u32 offset;
+    u32 length;
+};
+
 struct FbGfxShader {
     u32 program;
 };
@@ -66,6 +73,7 @@ struct FbGfxBufferDesc {
 
 struct FbGfxBuffer {
     u32 buffer;
+    u32 type;
 };
 
 enum FbErrorCode;
@@ -73,7 +81,9 @@ enum FbErrorCode;
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, u32 count, struct FbGfxShader *shader);
 enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout);
 void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer);
-void GFX_set_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout);
+void GFX_update_buffer(struct FbGfxBuffer *buffer, u64 size, void *data);
+void GFX_set_vertex_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout);
+void GFX_set_uniform_buffers(struct FbGfxShader *shader, struct FbGfxBufferBinding *buffers, u32 buffer_count);
 void GFX_draw(u32 vertices);
 
 #endif /* FB_GFX_H */

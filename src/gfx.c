@@ -71,23 +71,37 @@ enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 c
 void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer)
 {
     glGenBuffers(1, &buffer->buffer);
+    buffer->type = desc->type;
     glBindBuffer(desc->type, buffer->buffer);
     glBufferData(desc->type, desc->length, desc->data, desc->usage);
 }
 
-void GFX_set_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout)
+void GFX_update_buffer(struct FbGfxBuffer *buffer, u64 size, void *data)
+{
+    glBindBuffer(buffer->type, buffer->buffer);
+    glBufferSubData(buffer->type, 0, size, data);
+}
+
+void GFX_set_vertex_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout)
 {
     glBindVertexArray(layout->vao);
     for (u32 i = 0; i < buffer_count; ++i) {
         glBindBuffer(GL_ARRAY_BUFFER, buffers[i].buffer);
         for (u32 j = 0; j < layout->count; ++j) {
             struct FbGfxVertexEntry entry = layout->desc[j];
-            //if (entry.index == i) {
             s32 attr = glGetAttribLocation(shader->program, entry.name);
             glEnableVertexAttribArray(attr);
             glVertexAttribPointer(attr, entry.count, entry.type, entry.normalized, entry.stride, (void*)entry.offset);
-            //}
         }
+    }
+}
+
+void GFX_set_uniform_buffers(struct FbGfxShader *shader, struct FbGfxBufferBinding *buffers, u32 buffer_count)
+{
+    for (u32 i = 0; i < buffer_count; ++i) {
+        struct FbGfxBufferBinding binding = buffers[i];
+        u32 idx = glGetUniformBlockIndex(shader->program, binding.name);
+        glBindBufferRange(GL_UNIFORM_BUFFER, idx, binding.buffer->buffer, binding.offset, binding.length);
     }
 }
 
@@ -95,3 +109,4 @@ void GFX_draw(u32 vertices)
 {
     glDrawArrays(GL_TRIANGLES, 0, vertices);
 }
+

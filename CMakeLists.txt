@@ -16,6 +16,8 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/
 set(FISHBALL_SOURCES
     src/shared/error.h
     src/shared/types.h
+    src/mathtypes.h
+    src/math.h
     src/main.c
     src/array.h
     src/file.h

@@ -33,6 +33,7 @@ void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+void   (*FB_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
 
 void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
 void   (*FB_glDisableVertexAttribArray)(GLuint index);
@@ -51,12 +52,14 @@ void   (*FB_glDeleteProgram)(GLuint program);
 void   (*FB_glDeleteShader)(GLuint shader);
 
 GLint  (*FB_glGetAttribLocation)(GLuint program, const GLchar *name);
+GLuint (*FB_glGetUniformBlockIndex)(GLuint program, const GLchar *name);
 void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
 void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glUseProgram)(GLuint program);
 
+void   (*FB_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 void   (*FB_glClear)(GLenum targets);
 
@@ -107,6 +110,7 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glBindBufferRange);
     LoadProc(glBindBufferBase);
     LoadProc(glBufferData);
+    LoadProc(glBufferSubData);
 
     LoadProc(glVertexAttribPointer);
     LoadProc(glDisableVertexAttribArray);
@@ -125,12 +129,14 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glDeleteShader);
 
     LoadProc(glGetAttribLocation);
+    LoadProc(glGetUniformBlockIndex);
     LoadProc(glGetProgramiv);
     LoadProc(glGetProgramInfoLog);
     LoadProc(glGetShaderiv);
     LoadProc(glGetShaderInfoLog);
     LoadProc(glUseProgram);
 
+    LoadProc(glViewport);
     LoadProc(glClearColor);
     LoadProc(glClear);
     LoadProc(glDrawArrays);

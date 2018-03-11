@@ -2,6 +2,7 @@
 
 in vec3 ColorPS;
 in vec3 NormalPS;
+in vec3 WorldPS;
 
 out vec4 Color;
 

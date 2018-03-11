@@ -48,6 +48,7 @@ extern void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
 extern void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 extern void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 extern void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+extern void   (*FB_glBufferSubData)(GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid * data);
 
 extern void   (*FB_glVertexAttribPointer)(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer);
 extern void   (*FB_glDisableVertexAttribArray)(GLuint index);
@@ -66,12 +67,14 @@ extern void   (*FB_glDeleteProgram)(GLuint program);
 extern void   (*FB_glDeleteShader)(GLuint shader);
 
 extern GLint  (*FB_glGetAttribLocation)(GLuint program, const GLchar *name);
+extern GLuint (*FB_glGetUniformBlockIndex)(GLuint program, const GLchar *name);
 extern void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 extern void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 extern void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
 extern void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 extern void   (*FB_glUseProgram)(GLuint program);
 
+extern void   (*FB_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 extern void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 extern void   (*FB_glClear)(GLenum targets);
 extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
@@ -87,6 +90,7 @@ extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 #define glBindBufferRange FB_glBindBufferRange
 #define glBindBufferBase FB_glBindBufferBase
 #define glBufferData FB_glBufferData
+#define glBufferSubData FB_glBufferSubData
 
 #define glVertexAttribPointer FB_glVertexAttribPointer
 #define glDisableVertexAttribArray FB_glDisableVertexAttribArray
@@ -105,12 +109,14 @@ extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 #define glDeleteShader FB_glDeleteShader
 
 #define glGetAttribLocation FB_glGetAttribLocation
+#define glGetUniformBlockIndex FB_glGetUniformBlockIndex
 #define glGetProgramiv FB_glGetProgramiv
 #define glGetProgramInfoLog FB_glGetProgramInfoLog
 #define glGetShaderiv FB_glGetShaderiv
 #define glGetShaderInfoLog FB_glGetShaderInfoLog
 #define glUseProgram FB_glUseProgram
 
+#define glViewport FB_glViewport
 #define glClearColor FB_glClearColor
 #define glClear FB_glClear
 #define glDrawArrays FB_glDrawArrays

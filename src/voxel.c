@@ -200,8 +200,11 @@ void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **ver
                         unsigned int pz = VXL_encode_voxel_position(x, y, z + 1);
                         unsigned int nz = VXL_encode_voxel_position(x, y, z - 1);
 
+                        struct FbVoxel current = virtual_chunk.voxels[center];
+                        u8 type = current.type;
+                        if (current.type == 0) continue;
                         unsigned int vertex_count = 0;
-                        unsigned char r = 255, g = 128, b = 64;
+                        unsigned char r = type, g = type, b = type;
 
                         //if (virtual_chunk.voxels[ny].type == 0) {
                             struct FbVoxelVertex bot_sw = {
@@ -256,10 +259,10 @@ void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **ver
                                 .x = x, .y = y+1, .z = z, .r = r, .g = g, .b = b, .i = -1,.j =  0,.k =  0
                             };
                             struct FbVoxelVertex left_ne = {
-                                .x = x + 1, .y = y+1, .z = z, .r = r, .g = g, .b = b, .i = -1,.j =  0,.k =  0
+                                .x = x, .y = y+1, .z = z + 1, .r = r, .g = g, .b = b, .i = -1,.j =  0,.k =  0
                             };
                             struct FbVoxelVertex left_se = {
-                                .x = x + 1, .y = y, .z = z, .r = r, .g = g, .b = b, .i = -1,.j =  0,.k =  0
+                                .x = x, .y = y, .z = z + 1, .r = r, .g = g, .b = b, .i = -1,.j =  0,.k =  0
                             };
 
                             local_vertices[vertex_count++] = left_sw;
@@ -272,10 +275,10 @@ void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **ver
 
                         //if (virtual_chunk.voxels[px].type == 0) {
                             struct FbVoxelVertex right_sw = {
-                                .x = x, .y = y, .z = z+1, .r = r, .g = g, .b = b, .i = 1, .j = 0, .k = 0
+                                .x = x + 1, .y = y, .z = z, .r = r, .g = g, .b = b, .i = 1, .j = 0, .k = 0
                             };
                             struct FbVoxelVertex right_nw = {
-                                .x = x, .y = y+1, .z = z+1, .r = r, .g = g, .b = b, .i = 1, .j = 0, .k = 0
+                                .x = x + 1, .y = y+1, .z = z, .r = r, .g = g, .b = b, .i = 1, .j = 0, .k = 0
                             };
                             struct FbVoxelVertex right_ne = {
                                 .x = x + 1, .y = y+1, .z = z+1, .r = r, .g = g, .b = b, .i = 1, .j = 0, .k = 0
@@ -325,7 +328,7 @@ void VXL_create_geometry2(struct FbVoxelChunk *chunk, struct FbVoxelVertex **ver
                                 .x = x + 1, .y = y+1, .z = z, .r = r, .g = g, .b = b, .i = 0, .j = 0, .k = -1
                             };
                             struct FbVoxelVertex back_se = {
-                                .x = x + 1, .y = y, .z = z, .r = r, .g = g, .b = b, 0, 0, -1
+                                .x = x + 1, .y = y, .z = z, .r = r, .g = g, .b = b, .i = 0, .j = 0, .k = -1
                             };
 
                             local_vertices[vertex_count++] = back_sw;
