@@ -26,6 +26,10 @@ void   (*FB_glEnable)();
 void   (*FB_glDisable)();
 GLubyte *(*FB_glGetString)(GLenum name);
 
+void   (*FB_glGenTextures)(GLsizei n, GLuint *textures);
+void   (*FB_glBindTexture)(GLenum target, GLuint texture);
+void   (*FB_glTexImage3D)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
+
 void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
@@ -102,6 +106,10 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glEnable);
     LoadProc(glDisable);
     LoadProc(glGetString);
+
+    LoadProc(glGenTextures);
+    LoadProc(glBindTexture);
+    LoadProc(glTexImage3D);
 
     LoadProc(glGenBuffers);
     LoadProc(glDeleteBuffers);

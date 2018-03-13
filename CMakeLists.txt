@@ -11,6 +11,7 @@ option(GLFW_BUILD_TESTS OFF)
 OPTION(GLFW_BUILD_DOCS OFF)
 OPTION(GLFW_INSTALL OFF)
 
+add_subdirectory("${PROJECT_SOURCE_DIR}/external/freetype2" ${CMAKE_BINARY_DIR}/freetype2/)
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/)
 
 set(FISHBALL_SOURCES
@@ -22,6 +23,8 @@ set(FISHBALL_SOURCES
     src/array.h
     src/file.h
     src/file.c
+    src/font.h
+    src/font.c
     src/window.h
     src/window.c
     src/gfx.h
@@ -33,5 +36,8 @@ set(FISHBALL_SOURCES
 )
 
 add_executable(fishball ${FISHBALL_SOURCES})
+
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
-target_link_libraries(fishball glfw)
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/freetype2/include")
+
+target_link_libraries(fishball freetype glfw)
