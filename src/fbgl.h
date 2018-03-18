@@ -44,6 +44,8 @@ extern GLubyte *(*FB_glGetString)(GLenum name);
 extern void   (*FB_glGenTextures)(GLsizei n, GLuint *textures);
 extern void   (*FB_glBindTexture)(GLenum target, GLuint texture);
 extern void   (*FB_glTexImage3D)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
+extern void   (*FB_glTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+extern void   (*FB_glPixelStorei)(GLenum pname, GLint param);
 
 extern void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 extern void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
@@ -90,6 +92,8 @@ extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 #define glGenTextures FB_glGenTextures
 #define glBindTexture FB_glBindTexture
 #define glTexImage3D FB_glTexImage3D
+#define glTexSubImage3D FB_glTexSubImage3D
+#define glPixelStorei FB_glPixelStorei
 
 #define glGenBuffers FB_glGenBuffers
 #define glDeleteBuffers FB_glDeleteBuffers

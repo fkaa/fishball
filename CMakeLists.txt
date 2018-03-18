@@ -14,6 +14,14 @@ OPTION(GLFW_INSTALL OFF)
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/freetype2" ${CMAKE_BINARY_DIR}/freetype2/)
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/)
 
+set(FISHCONV_SOURCES
+    src/shared/types.h
+    src/array.h
+    src/file.h
+    src/file.c
+
+    tool/main.c
+)
 set(FISHBALL_SOURCES
     src/shared/error.h
     src/shared/types.h
@@ -35,8 +43,22 @@ set(FISHBALL_SOURCES
     src/voxel.c
 )
 
+add_executable(fishconv ${FISHCONV_SOURCES})
 add_executable(fishball ${FISHBALL_SOURCES})
 
+add_custom_target(
+    assets ALL
+    #    TARGET fishball POST_BUILD
+    COMMAND ${CMAKE_BINARY_DIR}/fishconv
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/asset
+    COMMENT "Building assets.."
+    DEPENDS fishconv
+    VERBATIM
+)
+
+add_dependencies(fishball assets)
+
+target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/freetype2/include")
 

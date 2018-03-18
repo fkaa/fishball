@@ -85,7 +85,7 @@ int main() {
     struct FbFontStore *font_store;
     struct FbFont *font;
     FONT_create_font_store(&font_store);
-    FONT_load_font("C:\\Windows\\Fonts\\seguiemj.ttf", &font);
+    FONT_load_font("asset\\FruityGirl.ttf", &font);
     FONT_stuff(font_store, font);
 
     printf("%d\n", ARRAY_size(vertices));

@@ -29,6 +29,8 @@ GLubyte *(*FB_glGetString)(GLenum name);
 void   (*FB_glGenTextures)(GLsizei n, GLuint *textures);
 void   (*FB_glBindTexture)(GLenum target, GLuint texture);
 void   (*FB_glTexImage3D)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
+void   (*FB_glTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
+void   (*FB_glPixelStorei)(GLenum pname, GLint param);
 
 void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
@@ -110,6 +112,8 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glGenTextures);
     LoadProc(glBindTexture);
     LoadProc(glTexImage3D);
+    LoadProc(glTexSubImage3D);
+    LoadProc(glPixelStorei);
 
     LoadProc(glGenBuffers);
     LoadProc(glDeleteBuffers);

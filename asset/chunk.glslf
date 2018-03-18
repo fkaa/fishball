@@ -8,5 +8,5 @@ out vec4 Color;
 
 void main()
 {
-    Color = vec4(ColorPS, 1.0);
+    Color = vec4(ColorPS * NormalPS, 1.0);
 }
