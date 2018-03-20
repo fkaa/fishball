@@ -26,6 +26,8 @@ set(FISHCONV_SOURCES
     tool/export.c
     tool/bdf.h
     tool/bdf.c
+    tool/time.h
+    tool/time.c
 )
 set(FISHBALL_SOURCES
     src/shared/error.h
@@ -36,6 +38,8 @@ set(FISHBALL_SOURCES
     src/array.h
     src/file.h
     src/file.c
+    src/import.h
+    src/import.c
     src/font.h
     src/font.c
     src/window.h
@@ -64,6 +68,7 @@ add_custom_target(
 add_dependencies(fishball assets)
 
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/freetype2/include")
 

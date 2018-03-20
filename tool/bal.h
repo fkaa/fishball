@@ -1,7 +1,7 @@
 #include "shared/types.h"
 
 #define BAL_PTR(ref) \
-    ((void*)((char *)&(ref) + (ref.offset))
+    (void*)((char *)&(ref) + (ref.offset))
 #define BAL_REF_TYPE(type) \
     union type##Ref { \
         s32 offset; \
@@ -55,6 +55,8 @@ struct BalBufferView {
 struct BalGlyph {
     u16 codepoint;
     u8 width, height;
+    s8 xoff, yoff;
+    s8 xadvance;
     u32 data_offset;
 };
 

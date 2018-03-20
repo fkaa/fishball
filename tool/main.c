@@ -12,6 +12,7 @@ int main()
     BAL_create_exporter("assets.toml", "fish.bal", &exporter);
     BAL_export_font(exporter, "unifont.bdf");
 
+
     BAL_exporter_write(exporter);
     return 0;
 }

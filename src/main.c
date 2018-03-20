@@ -5,6 +5,8 @@
 #include "gfx.h"
 #include "math.h"
 #include "font.h"
+#include "bal.h"
+#include "import.h"
 
 #include <stdlib.h>  
 
@@ -21,6 +23,12 @@ int main() {
     };
     struct FbVoxelWorld *world;
     VXL_new_world(cfg, &world);
+
+    struct BalHeader *bal_header = 0;
+    BAL_import("asset/fish.bal", &bal_header);
+    struct BalDescriptorTable *table = BAL_PTR(bal_header->descriptor_tables);
+    printf("Loading ´fish.bal´:\n");
+    printf("\tdescriptor_count:%d\n", table->descriptor_count);
 
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
@@ -80,13 +88,6 @@ int main() {
 
     struct FbMatrix4 proj = mat4_perspective_RH(60.f * 3.14f/180.f, 800.f / 600.f, .01f, 100.f);
     struct FbMatrix4 view = mat4_look_at_RH((struct FbVec3){10, 10, 10}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
-
-    FONT_init();
-    struct FbFontStore *font_store;
-    struct FbFont *font;
-    FONT_create_font_store(&font_store);
-    FONT_load_font("asset\\FruityGirl.ttf", &font);
-    FONT_stuff(font_store, font);
 
     printf("%d\n", ARRAY_size(vertices));
     glViewport(0, 0, 800, 600);
