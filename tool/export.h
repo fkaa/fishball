@@ -17,6 +17,7 @@ struct BalExporter {
     (BAL_ALIGN(pointer), (type *)BAL_ALLOC(pointer, BAL_GET_SIZE(type, field, count)))
 
 void BAL_create_exporter(const char *path, const char *output, struct BalExporter **exporter);
+void BAL_exporter_write(struct BalExporter *exporter);
 struct BalBuffer *BAL_allocate_descriptor_table(struct BalExporter *exporter, u32 size);
 struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size);
 struct BalBuffer *BAL_allocate_buffer(struct BalExporter *exporter, u32 size);

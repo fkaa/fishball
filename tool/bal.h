@@ -60,7 +60,7 @@ struct BalGlyph {
 
 struct BalFont {
     u32 glyph_count;
-    struct BalBufferView data;
+    union BalBufferRef buffer;
     struct BalGlyph glyphs[1];
 };
 

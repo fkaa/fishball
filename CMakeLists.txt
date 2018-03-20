@@ -21,6 +21,11 @@ set(FISHCONV_SOURCES
     src/file.c
 
     tool/main.c
+    tool/bal.h
+    tool/export.h
+    tool/export.c
+    tool/bdf.h
+    tool/bdf.c
 )
 set(FISHBALL_SOURCES
     src/shared/error.h

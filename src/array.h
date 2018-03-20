@@ -11,6 +11,7 @@ struct FbArrayHeader {
 #define ARRAY_size(array) ((array) ? FB_ARRAY_HEADER(array)->size : 0)
 #define ARRAY_capacity(array) ((array) ? FB_ARRAY_HEADER(array)->capacity : 0)
 #define ARRAY_full(array) (ARRAY_size(array) >= ARRAY_capacity(array))
+#define ARRAY_reset(array) ((array) ? FB_ARRAY_HEADER(array)->size = 0 : 0)
 #define ARRAY_append(array, items, n) \
     ARRAY_size(array) + (n) >= ARRAY_capacity(array) ? array = ARRAY_grow(array, sizeof(*array), (n)) : 0; \
     for (unsigned int i = 0, sz = FB_ARRAY_HEADER(array)->size; i < (n); ++i) array[sz + i] = (items)[i]; FB_ARRAY_HEADER(array)->size += (n) 
