@@ -37,11 +37,11 @@ void BAL_exporter_write(struct BalExporter *exporter)
 
     u32 table_index = 0;
     for (u32 i = 0; i < ARRAY_size(exporter->fonts); ++i) {
-        struct BalDescriptor desc;
-        desc.type = BAL_TYPE_FONT;
+        struct BalDescriptor *desc = &table->descriptors[table_index];
+        desc->type = BAL_TYPE_FONT;
         struct BalFont *font = exporter->fonts[i];
-        BAL_SET_REF_PTR(desc.ref, font);
-        table->descriptors[table_index++] = desc;
+        BAL_SET_REF_PTR(desc->ref, font);
+        table_index++;
     }
 
     struct BalHeader *header = (struct BalHeader *)exporter->data_start;
@@ -55,7 +55,6 @@ struct BalDescriptorTable *BAL_allocate_descriptor_table(struct BalExporter *exp
 {
     return BAL_ALLOC_VARIABLE_SIZE_TYPE(exporter->data_end, struct BalDescriptorTable, descriptors, size);
 }
-
 
 struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size)
 {

@@ -122,7 +122,7 @@ void BAL_export_font(struct BalExporter *exporter, const char *path)
     printf("BAL/BDF: %d glyphs, %d bytes bitmap.. %.1fms\n", ARRAY_size(glyphs), ARRAY_size(data), TIME_ms(time));
 
     memcpy_s(buf->data, buf->size, data, ARRAY_size(data));
-    memcpy_s(font->glyphs, font->glyph_count, glyphs, ARRAY_size(glyphs));
+    memcpy_s(font->glyphs, font->glyph_count * sizeof(struct BalGlyph), glyphs, ARRAY_size(glyphs) * sizeof(struct BalGlyph));
 
     ARRAY_push(exporter->fonts, font);
 }

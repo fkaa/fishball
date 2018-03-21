@@ -1,7 +1,7 @@
 #include "shared/types.h"
 
 #define BAL_PTR(ref) \
-    (void*)((char *)&(ref) + (ref.offset))
+    ((void*)((char *)&(ref) + (ref).offset))
 #define BAL_REF_TYPE(type) \
     union type##Ref { \
         s32 offset; \

@@ -3,8 +3,14 @@
 
 #include "shared/types.h"
 
+struct BalFont;
+
 struct FbFontStore;
-struct FbFont;
+
+struct FbFont {
+    struct BalFont *bal_font;
+};
+
 struct FbGlyph {
     u16 x, y, w, h;
     u16 offset_x, offset_y;
@@ -20,12 +26,9 @@ struct FbGlyphVertex {
 
 enum FbErrorCode;
 
-enum FbErrorCode FONT_init();
-enum FbErrorCode FONT_destroy();
 enum FbErrorCode FONT_create_font_store(struct FbFontStore **store);
-enum FbErrorCode FONT_load_font(const char *path, struct FbFont **font);
+enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id, struct FbFont *font);
 void FONT_stuff(struct FbFontStore *store, struct FbFont *font);
-char *FONT_iterate_glyphs(char *str, struct FbGlyph *glyph);
 
 
 #endif /* FB_FONT_H */

@@ -30,6 +30,13 @@ int main() {
     printf("Loading ´fish.bal´:\n");
     printf("\tdescriptor_count:%d\n", table->descriptor_count);
 
+    struct FbFontStore *store;
+    struct FbFont font;
+
+    FONT_create_font_store(&store);
+    FONT_load_font(table, "unifont", &font);
+    FONT_stuff(store, &font);
+
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
