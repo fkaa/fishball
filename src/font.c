@@ -14,7 +14,7 @@ enum FbErrorCode FONT_create_font_store(struct FbFontStore **store)
     u32 texture = 0;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA, 1024, 1024, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, 1024, 1024, 4, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
 
     struct FbFontStore fstore;
     fstore.texture_array = texture;

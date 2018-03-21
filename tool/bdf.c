@@ -42,7 +42,6 @@ void BDF_parse_bdf(const char *path, struct BalGlyph **glyphs, u8 **glyph_data)
     struct BalGlyph glyph;
     u8 *bitmap = 0;
     char *line = 0;
-    int i = 0;
     u32 data_offset = 0;
     bool parse_bitmap = false;
     u16 codepoint = 0;
@@ -86,8 +85,9 @@ void BDF_parse_bdf(const char *path, struct BalGlyph **glyphs, u8 **glyph_data)
             ARRAY_reset(bitmap);
         }
         else if (parse_bitmap) {
+            u32 bits = strlen(line) * 4;
             u16 row = (u16)strtol(line, NULL, 16);
-            for (u32 i = 0; i < 16; ++i) {
+            for (s32 i = bits - 1; i >= 0; --i) {
                 if (row & (1 << i)) {
                     ARRAY_push(bitmap, 0xff);
                 } else {
