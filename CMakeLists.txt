@@ -67,7 +67,7 @@ set(FISHBALL_SOURCES
     tool/helper.c
     tool/helper.h
 
-    "${PROJECT_SOURCE_DIR}/external/Remotery/lib/Remotery.c"
+    "${PROJECT_SOURCE_DIR}/external/remotery/lib/Remotery.c"
 )
 
 add_executable(fishconv ${FISHCONV_SOURCES})
@@ -90,6 +90,6 @@ target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
 
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
-target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/Remotery/lib")
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/remotery/lib")
 
 target_link_libraries(fishball freetype glfw)
