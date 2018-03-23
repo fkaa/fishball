@@ -1,0 +1,6 @@
+[[bdf]]
+name = "unifont"
+source = "unifont.bdf"
+
+[[bdf.options]]
+texture-size = 1024

@@ -7,10 +7,17 @@
 #include "font.h"
 #include "bal.h"
 #include "import.h"
+#include "helper.h"
+#include "Remotery.h"
 
 #include <stdlib.h>  
 
 int main() {
+    Remotery *rmt;
+    if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&rmt)) {
+        return -1;
+    }
+
     struct FbWindow *wnd = 0;
     window_new((struct FbWindowConfig) { .width = 800, .height = 600, .title = "Test Window" }, &wnd);
     window_cxt(wnd);
@@ -27,8 +34,8 @@ int main() {
     struct BalHeader *bal_header = 0;
     BAL_import("asset/fish.bal", &bal_header);
     struct BalDescriptorTable *table = BAL_PTR(bal_header->descriptor_tables);
-    printf("Loading ´fish.bal´:\n");
-    printf("\tdescriptor_count:%d\n", table->descriptor_count);
+    printf("Loading 'fish.bal':\n");
+    printf("\tdescriptor_count: %d\n", table->descriptor_count);
 
     struct FbFontStore *store;
     struct FbFont font;
@@ -101,6 +108,7 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     float t = 0.f;
     while (window_open(wnd)) {
+        rmt_BeginCPUSample(frame, 0); 
         view = mat4_look_at_RH((struct FbVec3){sinf(t)*50, sin(t*0.2)*70, cosf(t)*50}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
         struct FbMatrix4 mat = mat4_mul(view, proj);
         GFX_update_buffer(&camera_buffer, sizeof(mat), &mat);
@@ -117,6 +125,9 @@ int main() {
         window_poll(wnd);
 
         t += 0.0001f;
+        rmt_EndCPUSample();
     }
+
+    rmt_DestroyGlobalInstance(rmt);
     return 0;
 }

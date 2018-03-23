@@ -11,8 +11,15 @@ option(GLFW_BUILD_TESTS OFF)
 OPTION(GLFW_BUILD_DOCS OFF)
 OPTION(GLFW_INSTALL OFF)
 
-add_subdirectory("${PROJECT_SOURCE_DIR}/external/freetype2" ${CMAKE_BINARY_DIR}/freetype2/)
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/)
+
+set(TOML_INCLUDE_DIR
+    external/tomlc99/
+)
+set(TOML_SOURCES
+    external/tomlc99/toml.h
+    external/tomlc99/toml.c
+)
 
 set(FISHCONV_SOURCES
     src/shared/types.h
@@ -28,7 +35,13 @@ set(FISHCONV_SOURCES
     tool/bdf.c
     tool/time.h
     tool/time.c
+
+    tool/mem.c
+    tool/mem.h
+
+    "${TOML_SOURCES}"
 )
+
 set(FISHBALL_SOURCES
     src/shared/error.h
     src/shared/types.h
@@ -50,13 +63,18 @@ set(FISHBALL_SOURCES
     src/fbgl.c
     src/voxel.h
     src/voxel.c
+
+    tool/helper.c
+    tool/helper.h
+
+    "${PROJECT_SOURCE_DIR}/external/Remotery/lib/Remotery.c"
 )
 
 add_executable(fishconv ${FISHCONV_SOURCES})
 add_executable(fishball ${FISHBALL_SOURCES})
 
 add_custom_target(
-    assets ALL
+    asset_build ALL
     #    TARGET fishball POST_BUILD
     COMMAND ${CMAKE_BINARY_DIR}/fishconv
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/asset
@@ -65,11 +83,13 @@ add_custom_target(
     VERBATIM
 )
 
-add_dependencies(fishball assets)
+add_dependencies(fishball asset_build)
 
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
+target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
+
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
-target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/freetype2/include")
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/Remotery/lib")
 
 target_link_libraries(fishball freetype glfw)

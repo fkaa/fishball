@@ -57,11 +57,13 @@ struct BalGlyph {
     u8 width, height;
     s8 xoff, yoff;
     s8 xadvance;
-    u32 data_offset;
+    u8 layer;
+    u16 x, y;
 };
 
 struct BalFont {
     u32 glyph_count;
+    u32 texture_size;
     union BalBufferRef buffer;
     struct BalGlyph glyphs[1];
 };

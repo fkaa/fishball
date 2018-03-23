@@ -33,19 +33,6 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
 {
     struct FbVoxelWorld w = {0};
 
-    printf(
-        "CHUNK_SIZE: %d\n"
-        "CHUNK_VOLUME: %d\n"
-        "VIRTUAL_CHUNK_SIZE: %d\n"
-        "VIRTUAL_CHUNK_VOLUME: %d\n"
-        "VIRTUAL_CHUNK_COUNT: %d\n",
-        CHUNK_SIZE,
-        CHUNK_VOLUME,
-        VIRTUAL_CHUNK_SIZE,
-        VIRTUAL_CHUNK_VOLUME,
-        VIRTUAL_CHUNK_COUNT
-    );
-
     /*for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
         struct FbVoxelChunkPage page = (struct FbVoxelChunkPage) { .voxels = malloc(VIRTUAL_CHUNK_VOLUME) };
         ARRAY_push(w.memory.chunk_pages, page);

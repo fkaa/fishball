@@ -28,6 +28,7 @@ enum FbErrorCode;
 
 enum FbErrorCode FONT_create_font_store(struct FbFontStore **store);
 enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id, struct FbFont *font);
+void FONT_draw_string(struct FbFont *font, const char *string, float x, float y);
 void FONT_stuff(struct FbFontStore *store, struct FbFont *font);
 
 
