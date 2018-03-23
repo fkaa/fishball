@@ -2,6 +2,7 @@
 #include "array.h"
 #include "time.h"
 #include "mem.h"
+#include "export.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -105,7 +106,7 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
             ARRAY_reset(bitmap);
         }
         else if (parse_bitmap) {
-            u32 bits = strlen(line) * 4;
+            u32 bits = (u32)strlen(line) * 4;
             u16 row = (u16)strtol(line, NULL, 16);
             for (s32 i = bits - 1; i >= 0; --i) {
                 if (row & (1 << i)) {
@@ -124,28 +125,24 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
     fclose(f);
 }
 
-void BAL_export_font(struct BalExporter *exporter, const char *path)
+struct BalFont *BAL_export_font(struct BalExporter *exporter, const char *path)
 {
     struct BalGlyph *glyphs = 0;
     u8 *data = 0;
     u64 data_len = 0;
 
-    s64 start = TIME_current();
     BDF_parse_bdf(path, 1024, &glyphs, &data, &data_len);
-    s64 time = TIME_current() - start;
 
-    struct BalBuffer *buf = BAL_allocate_buffer(exporter, data_len);
-    buf->size = data_len;
+    struct BalBuffer *buf = BAL_allocate_buffer(exporter, (u32)data_len);
+    buf->size = (u32)data_len;
 
     struct BalFont *font = BAL_allocate_font(exporter, ARRAY_size(glyphs));
     font->texture_size = 1024;
     font->glyph_count = ARRAY_size(glyphs);
     BAL_SET_REF_PTR(font->buffer, buf);
 
-    printf("BAL/BDF: %d glyphs, %d bytes bitmap.. %.1fms\n", ARRAY_size(glyphs), data_len, TIME_ms(time));
-
     memcpy_s(buf->data, buf->size, data, data_len);
     memcpy_s(font->glyphs, font->glyph_count * sizeof(struct BalGlyph), glyphs, ARRAY_size(glyphs) * sizeof(struct BalGlyph));
 
-    ARRAY_push(exporter->fonts, font);
+    return font;
 }

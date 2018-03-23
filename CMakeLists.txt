@@ -14,11 +14,11 @@ OPTION(GLFW_INSTALL OFF)
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/)
 
 set(TOML_INCLUDE_DIR
-    external/tomlc99/
+    external/toml/
 )
 set(TOML_SOURCES
-    external/tomlc99/toml.h
-    external/tomlc99/toml.c
+    external/toml/toml.h
+    external/toml/toml.c
 )
 
 set(FISHCONV_SOURCES
@@ -92,4 +92,4 @@ target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/remotery/lib")
 
-target_link_libraries(fishball freetype glfw)
+target_link_libraries(fishball glfw)

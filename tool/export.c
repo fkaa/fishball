@@ -1,7 +1,9 @@
 #include "export.h"
 #include "array.h"
 #include "mem.h"
+#include "time.h"
 #include "toml.h"
+#include "bdf.h"
 
 #include <stdio.h>
 #include <windows.h>
@@ -44,6 +46,68 @@ void BAL_create_exporter(const char *path, struct BalExporter **exporter)
     **exporter = e;
 }
 
+char* readable_bytes(double size/*in bytes*/, char *buf) {
+    int i = 0;
+    const char* units[] = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
+    while (size > 1024) {
+        size /= 1024;
+        i++;
+    }
+    sprintf(buf, "%.*f %s", i, size, units[i]);
+    return buf;
+}
+
+void BAL_process_conv(struct BalExporter *exporter, const char *path)
+{
+    FILE *f = 0;
+    errno_t error = fopen_s(&f, path, "r");
+    if (!f || error) {
+        // TODO(fkaa): error
+        return;
+    }
+
+    char errbuf[256];
+    toml_table_t *config = toml_parse_file(f, errbuf, sizeof(errbuf));
+    fclose(f);
+
+    if (!config) {
+        // TODO(fkaa): error
+        return;
+    }
+
+    toml_array_t *bdfs = toml_array_in(config, "bdf");
+    if (bdfs) {
+        u32 idx = 0;
+        toml_table_t *bdf = 0;
+        while ((bdf = toml_table_at(bdfs, idx++)) != 0) {
+            char *file = 0;
+            const char *source = 0;
+            if ((source = toml_raw_in(bdf, "source")) != 0) {
+                toml_rtos(source, &file);
+                char *file_path = malloc(strlen(file) + strlen(path) + 1);
+                *file_path = '\0';
+                strcat(file_path, path);
+                file_path[strlen(file_path) - sizeof("conv.toml") + 1] = '\0';
+                strcat(file_path, file);
+                free(file);
+
+                s64 start = TIME_current();
+                struct BalFont *font = BAL_export_font(exporter, file_path);
+                s64 time = TIME_current() - start;
+
+                ARRAY_push(exporter->fonts, font);
+    
+                char texturesize[32];
+                printf("%s: %d glyphs, %s textures.. %.1fms\n",
+                        file_path,
+                        font->glyph_count,
+                        readable_bytes((r64)((struct BalBuffer *)BAL_PTR(font->buffer))->size, texturesize),
+                        TIME_ms(time));
+            }
+        }
+    }
+}
+
 void BAL_walk_dirs(struct BalExporter *exporter)
 {
     toml_table_t *pkg = toml_table_in(exporter->toml, "package");
@@ -54,7 +118,6 @@ void BAL_walk_dirs(struct BalExporter *exporter)
         char **directory_paths = 0;
         const char *directory = 0;
 
-        char conv_file[256];
         u32 idx = 0;
         while ((directory = toml_raw_at(directories, idx++)) != 0) {
             char *str = 0;
@@ -70,7 +133,9 @@ void BAL_walk_dirs(struct BalExporter *exporter)
 
         u32 dir_len = ARRAY_size(directory_paths);
         for (u32 i = 0; i < dir_len; ++i) {
-            printf("[%d/%d] %s\n", i + 1, dir_len, directory_paths[i]);
+            //printf("[%d/%d] %s\n", i + 1, dir_len, directory_paths[i]);
+            printf(">%s\n", directory_paths[i]);
+            BAL_process_conv(exporter, directory_paths[i]);
         }
     }
     // for directory in conv.toml["package"]["directories]
@@ -81,16 +146,6 @@ void BAL_walk_dirs(struct BalExporter *exporter)
     // }
 }
 
-char* readable_bytes(double size/*in bytes*/, char *buf) {
-    int i = 0;
-    const char* units[] = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
-    while (size > 1024) {
-        size /= 1024;
-        i++;
-    }
-    sprintf(buf, "%.*f %s", i, size, units[i]);
-    return buf;
-}
 
 void BAL_exporter_write(struct BalExporter *exporter)
 {
@@ -134,7 +189,7 @@ void BAL_exporter_write(struct BalExporter *exporter)
     BAL_SET_REF_PTR(header->descriptor_tables, table);
 
     char bytesize[32];
-    printf("Writing to '%s' (%s)", output, readable_bytes(exporter->data_end - exporter->data_start, bytesize));
+    printf(">writing to '%s' (%s)\n", output, readable_bytes((r64)(exporter->data_end - exporter->data_start), bytesize));
 
     fwrite(exporter->data_start, exporter->data_end - exporter->data_start, 1, f);
     fclose(f);

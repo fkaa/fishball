@@ -61,8 +61,8 @@ int main() {
 
     struct FbGfxShader shader = {0};
     struct FbGfxShaderFile files[] = {
-        { .path = "asset/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
-        { .path = "asset/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
+        { .path = "asset/shader/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
+        { .path = "asset/shader/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
     };
     GFX_load_shader_files(files, 2, &shader);
 

@@ -1,4 +1,11 @@
-#include "shared/types.h"
-#include "export.h"
+#ifndef BAL_BDF_H
+#define BAL_BDF_H
 
-void BAL_export_font(struct BalExporter *exporter, const char *path);
+#include "shared/types.h"
+
+struct BalFont;
+struct BalExporter;
+
+struct BalFont *BAL_export_font(struct BalExporter *exporter, const char *path);
+
+#endif /* BAL_BDF_H */
