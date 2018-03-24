@@ -8,12 +8,12 @@ enum FbErrorCode run()
 {
     struct BalExporter *exporter = 0;
     enum FbErrorCode err = FB_ERR_NONE;
-    
+
     if ((err = BAL_create_exporter("conv.toml", &exporter)) != FB_ERR_NONE)
         return err;
 
-    BAL_walk_dirs(exporter);
-    //BAL_export_font(exporter, "unifont.bdf");
+    if ((err = BAL_walk_dirs(exporter)) != FB_ERR_NONE)
+        return err;
 
     if ((err = BAL_exporter_write(exporter)) != FB_ERR_NONE)
         return err;

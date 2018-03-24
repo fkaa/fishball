@@ -58,13 +58,12 @@ char* readable_bytes(double size/*in bytes*/, char *buf) {
     return buf;
 }
 
-void BAL_process_conv(struct BalExporter *exporter, const char *path)
+enum FbErrorCode BAL_process_conv(struct BalExporter *exporter, const char *path)
 {
     FILE *f = 0;
     errno_t error = fopen_s(&f, path, "r");
     if (!f || error) {
-        // TODO(fkaa): error
-        return;
+        return ERR_fmt(FB_ERR_FILE_NOT_FOUND, "Failed to open conv file '%s': %s", path, error);
     }
 
     char errbuf[256];
@@ -72,8 +71,7 @@ void BAL_process_conv(struct BalExporter *exporter, const char *path)
     fclose(f);
 
     if (!config) {
-        // TODO(fkaa): error
-        return;
+        return ERR_fmt(FB_ERR_PARSE_TOML, "Failed parse conv file '%s': %s", path, errbuf);
     }
 
     toml_array_t *bdfs = toml_array_in(config, "bdf");
@@ -107,13 +105,16 @@ void BAL_process_conv(struct BalExporter *exporter, const char *path)
             }
         }
     }
+
+    return FB_ERR_NONE;
 }
 
-void BAL_walk_dirs(struct BalExporter *exporter)
+enum FbErrorCode BAL_walk_dirs(struct BalExporter *exporter)
 {
     toml_table_t *pkg = toml_table_in(exporter->toml, "package");
     if (!pkg)
-        return;
+        return FB_ERR_NONE;
+
     toml_array_t *directories = toml_array_in(pkg, "directories");
     if (directories) {
         char **directory_paths = 0;
@@ -136,15 +137,14 @@ void BAL_walk_dirs(struct BalExporter *exporter)
         for (u32 i = 0; i < dir_len; ++i) {
             //printf("[%d/%d] %s\n", i + 1, dir_len, directory_paths[i]);
             printf(">%s\n", directory_paths[i]);
-            BAL_process_conv(exporter, directory_paths[i]);
+            enum FbErrorCode err = FB_ERR_NONE;
+            if ((err = BAL_process_conv(exporter, directory_paths[i])) != FB_ERR_NONE) {
+                return err;
+            }
         }
     }
-    // for directory in conv.toml["package"]["directories]
-    // {
-    //     process(directory + "/conv.toml");
-    //
-    //     recursive?
-    // }
+
+    return FB_ERR_NONE;
 }
 
 

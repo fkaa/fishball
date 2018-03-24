@@ -22,7 +22,7 @@ struct BalExporter {
 enum FbErrorCode;
 
 enum FbErrorCode BAL_create_exporter(const char *path, struct BalExporter **exporter);
-void BAL_walk_dirs(struct BalExporter *exporter);
+enum FbErrorCode BAL_walk_dirs(struct BalExporter *exporter);
 enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter);
 struct BalDescriptorTable *BAL_allocate_descriptor_table(struct BalExporter *exporter, u32 size);
 struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size);
