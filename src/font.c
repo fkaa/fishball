@@ -107,6 +107,7 @@ bool FONT_find_glyph(struct BalFont *font, u32 codepoint, struct BalGlyph *glyph
 
 void FONT_draw_string(struct FbFont *font, const char *string, r32 x, r32 y)
 {
+    u32 color = 0xff000088;
     r32 cursor_x = x;
     r32 cursor_y = y;
     struct BalGlyph glyph;
@@ -116,6 +117,11 @@ void FONT_draw_string(struct FbFont *font, const char *string, r32 x, r32 y)
         u32 codepoint = c;
         
         if (FONT_find_glyph(font->bal_font, codepoint, &glyph)) {
+            struct FbGlyphVertex top_left = { cursor_x, cursor_y, 0, color, glyph.xoff, glyph.yoff, glyph.layer };
+            struct FbGlyphVertex top_right = { cursor_x + glyph.width, cursor_y, 0, color, glyph.xoff + glyph.width, glyph.yoff, glyph.layer };
+            struct FbGlyphVertex bottom_left = { cursor_x, cursor_y + glyph.height, 0, color, glyph.xoff, glyph.yoff + glyph.height, glyph.layer };
+            struct FbGlyphVertex bottom_right = { cursor_x + glyph.width, cursor_y + glyph.height, 0, color, glyph.xoff + glyph.width, glyph.yoff + glyph.height, glyph.layer };
+
             printf("glyph found (%d) for character (%c)\n", glyph.codepoint, c); 
             cursor_x += glyph.xadvance;
         }

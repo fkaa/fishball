@@ -23,6 +23,8 @@ set(TOML_SOURCES
 
 set(FISHCONV_SOURCES
     src/shared/types.h
+    src/shared/error.h
+    src/shared/error.c
     src/array.h
     src/file.h
     src/file.c
@@ -43,8 +45,9 @@ set(FISHCONV_SOURCES
 )
 
 set(FISHBALL_SOURCES
-    src/shared/error.h
     src/shared/types.h
+    src/shared/error.h
+    src/shared/error.c
     src/mathtypes.h
     src/math.h
     src/main.c

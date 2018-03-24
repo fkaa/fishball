@@ -7,6 +7,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch)
+{
+
+    return FB_ERR_NONE;
+}
+
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader *shader)
 {
     GLuint program = glCreateProgram();

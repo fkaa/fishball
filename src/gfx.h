@@ -43,6 +43,14 @@ struct FbGfxBufferBinding {
     u32 length;
 };
 
+struct FbGfxTextureBinding {
+    char *name;
+    u32 texture;
+    //struct FbGfxBuffer *buffer;
+    //u32 offset;
+    //u32 length;
+};
+
 struct FbGfxShader {
     u32 program;
 };
@@ -77,7 +85,20 @@ struct FbGfxBuffer {
     u32 type;
 };
 
+struct FbGfxSpriteBatch {
+    struct FbGfxShader *shader;
+    struct FbGfxInputLayout *layout;
+
+    struct FbGfxBuffer *vertex_buffer;
+    struct FbGfxBuffer *index_buffer;
+
+    void *vertex_buffer_ptr;
+    void *index_buffer_ptr;
+};
+
 enum FbErrorCode;
+
+enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch);
 
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, u32 count, struct FbGfxShader *shader);
 enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout);

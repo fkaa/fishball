@@ -6,16 +6,20 @@
 #include "math.h"
 #include "font.h"
 #include "bal.h"
+#include "mem.h"
 #include "import.h"
 #include "helper.h"
+#include "shared/error.h"
+
 #include "Remotery.h"
 
 #include <stdlib.h>  
 
-int main() {
+enum FbErrorCode run()
+{
     Remotery *rmt;
     if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&rmt)) {
-        return -1;
+        return ERROR_fmt(FB_ERR_REMOTERY_INIT, "Could not initialize remotery");
     }
 
     struct FbWindow *wnd = 0;
@@ -36,6 +40,9 @@ int main() {
     struct BalDescriptorTable *table = BAL_PTR(bal_header->descriptor_tables);
     printf("Loading 'fish.bal':\n");
     printf("\tdescriptor_count: %d\n", table->descriptor_count);
+
+    struct FbGfxSpriteBatch batch;
+    GFX_create_sprite_batch(MiB(4), MiB(1), &batch);
 
     struct FbFontStore *store;
     struct FbFont font;
@@ -135,5 +142,16 @@ int main() {
     }
 
     rmt_DestroyGlobalInstance(rmt);
-    return 0;
+
+    return FB_ERR_NONE;
+}
+
+int main(int argc, char* argv[])
+{
+    if (run() != FB_ERR_NONE) {
+        //fprintf(stderr, "%s\n", ERROR_buffer);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
