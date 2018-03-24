@@ -4,17 +4,17 @@
 #include "time.h"
 #include "toml.h"
 #include "bdf.h"
+#include "shared/error.h"
 
 #include <stdio.h>
 #include <windows.h>
 
-void BAL_create_exporter(const char *path, struct BalExporter **exporter)
+enum FbErrorCode BAL_create_exporter(const char *path, struct BalExporter **exporter)
 {
     FILE *f = 0;
     errno_t error = fopen_s(&f, path, "r");
     if (!f || error) {
-        // TODO(fkaa): error
-        return;
+        return ERR_fmt(FB_ERR_FILE_NOT_FOUND, "Failed to open root conv file '%s': %d", path, error);
     }
 
     char errbuf[256];
@@ -22,8 +22,7 @@ void BAL_create_exporter(const char *path, struct BalExporter **exporter)
     fclose(f);
 
     if (!config) {
-        // TODO(fkaa): error
-        return;
+        return ERR_fmt(FB_ERR_PARSE_TOML, "Failed to parse root conv file '%s': %s", path, errbuf);
     }
 
     u8 *start = (char *)MEM_virtual_alloc(GiB(1));
@@ -44,6 +43,8 @@ void BAL_create_exporter(const char *path, struct BalExporter **exporter)
 
     *exporter = malloc(sizeof(**exporter));
     **exporter = e;
+
+    return FB_ERR_NONE;
 }
 
 char* readable_bytes(double size/*in bytes*/, char *buf) {
@@ -147,12 +148,11 @@ void BAL_walk_dirs(struct BalExporter *exporter)
 }
 
 
-void BAL_exporter_write(struct BalExporter *exporter)
+enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter)
 {
     toml_table_t *pkg = 0;
     if (!(pkg = toml_table_in(exporter->toml, "package"))) {
-        // TODO(fkaa): error
-        return;
+        return ERR_fmt(FB_ERR_PARSE_TOML, "Could not find [package] table in root conv file");
     }
 
     char output[256];
@@ -168,8 +168,11 @@ void BAL_exporter_write(struct BalExporter *exporter)
         free(str);
     }
 
-    FILE *f = fopen(output, "wb+");
-    if (!f) return;
+    FILE *f = 0;
+    errno_t error = fopen_s(&f, output, "wb+");
+    if (!f || error) {
+        return ERR_fmt(FB_ERR_FILE_CREATE, "Failed to create BAL output file '%s': %d", output, error);
+    }
 
     u32 size = 0;
     size += ARRAY_size(exporter->fonts);
@@ -193,6 +196,8 @@ void BAL_exporter_write(struct BalExporter *exporter)
 
     fwrite(exporter->data_start, exporter->data_end - exporter->data_start, 1, f);
     fclose(f);
+
+    return FB_ERR_NONE;
 }
 
 struct BalDescriptorTable *BAL_allocate_descriptor_table(struct BalExporter *exporter, u32 size)

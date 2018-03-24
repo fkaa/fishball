@@ -19,7 +19,7 @@ enum FbErrorCode run()
 {
     Remotery *rmt;
     if (RMT_ERROR_NONE != rmt_CreateGlobalInstance(&rmt)) {
-        return ERROR_fmt(FB_ERR_REMOTERY_INIT, "Could not initialize remotery");
+        return ERR_fmt(FB_ERR_REMOTERY_INIT, "Could not initialize remotery");
     }
 
     struct FbWindow *wnd = 0;

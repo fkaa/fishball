@@ -19,9 +19,11 @@ struct BalExporter {
 #define BAL_ALLOC_VARIABLE_SIZE_TYPE(pointer, type, field, count) \
     (BAL_ALIGN(pointer), (type *)BAL_ALLOC(pointer, BAL_GET_SIZE(type, field, count)))
 
-void BAL_create_exporter(const char *path, struct BalExporter **exporter);
+enum FbErrorCode;
+
+enum FbErrorCode BAL_create_exporter(const char *path, struct BalExporter **exporter);
 void BAL_walk_dirs(struct BalExporter *exporter);
-void BAL_exporter_write(struct BalExporter *exporter);
+enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter);
 struct BalDescriptorTable *BAL_allocate_descriptor_table(struct BalExporter *exporter, u32 size);
 struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size);
 struct BalBuffer *BAL_allocate_buffer(struct BalExporter *exporter, u32 size);
