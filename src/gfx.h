@@ -14,10 +14,11 @@ struct FbGfxShaderFile {
 };
 
 enum FbGfxDataType {
-    FB_GFX_FLOAT = 0,
+    FB_GFX_FLOAT = 1406,
     FB_GFX_INT32,
     FB_GFX_BYTE = 0x1400,
     FB_GFX_UNSIGNED_BYTE = 0x1401,
+    FB_GFX_UNSIGNED_SHORT = 0x1403,
 };
 
 struct FbGfxVertexEntry {

@@ -44,6 +44,12 @@ int main() {
     FONT_load_font(table, "unifont", &font);
     FONT_stuff(store, &font);
 
+    FONT_enable_drawing();
+    FONT_draw_string(&font, "test", 10, 10);
+    //struct FbGfxBatch *batch;
+    // triangles, blend state etc.
+    //GFX_create_batch(size, layout, shader);
+
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
