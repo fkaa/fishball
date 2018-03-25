@@ -42,7 +42,7 @@ enum FbErrorCode run()
     printf("\tdescriptor_count: %d\n", table->descriptor_count);
 
     struct FbGfxSpriteBatch batch;
-    GFX_create_sprite_batch(MiB(4), MiB(1), &batch);
+    GFX_create_sprite_batch(KiB(2048), KiB(512), &batch);
 
     struct FbFontStore *store;
     struct FbFont font;
@@ -133,6 +133,9 @@ enum FbErrorCode run()
         GFX_set_vertex_buffers(&shader, &buffer, 1, &layout);
         GFX_set_uniform_buffers(&shader, bindings, 1);
         GFX_draw(ARRAY_size(vertices));
+
+        GFX_sprite_batch_begin(&batch);
+        GFX_sprite_batch_end(&batch);
 
         window_swap(wnd);
         window_poll(wnd);

@@ -14,6 +14,7 @@ typedef int GLint;
 typedef unsigned char GLubyte;
 typedef unsigned short GLushort;
 typedef unsigned int GLuint;
+typedef unsigned int GLbitfield;
 typedef int GLsizei;
 typedef float GLfloat;
 typedef double GLdouble;
@@ -51,6 +52,9 @@ extern void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 extern void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 extern void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
 extern void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
+extern void   (*FB_glUnmapBuffer)(GLenum target);
+extern void  *(*FB_glMapBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+extern void   (*FB_glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
 extern void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 extern void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 extern void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
@@ -84,6 +88,7 @@ extern void   (*FB_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 extern void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
 extern void   (*FB_glClear)(GLenum targets);
 extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
+extern void   (*FB_glDrawElements)(GLenum primitive, GLsizei count, GLenum type, const GLvoid *indices);
 
 #define glEnable FB_glEnable
 #define glDisable FB_glDisable
@@ -99,6 +104,9 @@ extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 #define glDeleteBuffers FB_glDeleteBuffers
 #define glBindBuffer FB_glBindBuffer
 #define glMapBuffer FB_glMapBuffer
+#define glUnmapBuffer FB_glUnmapBuffer
+#define glMapBufferRange FB_glMapBufferRange
+#define glFlushMappedBufferRange FB_glFlushMappedBufferRange
 #define glBindBufferRange FB_glBindBufferRange
 #define glBindBufferBase FB_glBindBufferBase
 #define glBufferData FB_glBufferData
@@ -132,6 +140,7 @@ extern void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
 #define glClearColor FB_glClearColor
 #define glClear FB_glClear
 #define glDrawArrays FB_glDrawArrays
+#define glDrawElements FB_glDrawElements
 
 // enums
 #define GL_DEPTH_BUFFER_BIT 0x00000100

@@ -9,8 +9,143 @@
 
 enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch)
 {
+    u32 buffers[2] = { 0, 0 };
+    glGenBuffers(2, buffers);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    glBufferData(GL_ARRAY_BUFFER, vertex_size, 0, FB_GFX_USAGE_DYNAMIC_WRITE);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size, 0, FB_GFX_USAGE_DYNAMIC_WRITE);
+
+    *batch = (struct FbGfxSpriteBatch) {
+        .shader = 0,
+        .layout = 0,
+
+        .vertex_buffer = { buffers[0], GL_ARRAY_BUFFER },
+        .index_buffer = { buffers[1], GL_ELEMENT_ARRAY_BUFFER },
+
+        .vertex_buffer_ptr = 0,
+        .index_buffer_ptr = 0,
+
+        .vertex_buffer_size = vertex_size,
+        .index_buffer_size = index_size,
+
+        .vertex_offset = 0,
+        .index_offset = 0,
+
+        .vertex_cursor = 0,
+        .index_cursor = 0,
+    };
 
     return FB_ERR_NONE;
+}
+
+void GFX_sprite_batch_map_buffers(struct FbGfxSpriteBatch *batch)
+{
+    if (batch->vertex_buffer_ptr || batch->index_buffer_ptr) {
+        printf("trying to map buffers that are already mapped!\n");
+        return;
+    }
+    
+    batch->vertex_offset = batch->vertex_cursor;
+    batch->index_offset = batch->index_cursor;
+
+    glBindBuffer(GL_ARRAY_BUFFER, batch->vertex_buffer.buffer);
+    batch->vertex_buffer_ptr = glMapBufferRange(GL_ARRAY_BUFFER, batch->vertex_cursor, batch->vertex_buffer_size - batch->vertex_cursor, GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
+    batch->index_buffer_ptr = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, batch->index_cursor, batch->index_buffer_size - batch->index_cursor, GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+}
+
+void GFX_sprite_batch_unmap_buffers(struct FbGfxSpriteBatch *batch)
+{
+    if (!batch->vertex_buffer_ptr || !batch->index_buffer_ptr) {
+        printf("trying to unmap buffers that are not mapped!\n");
+        return;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, batch->vertex_buffer.buffer);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+    if (batch->vertex_cursor != batch->vertex_offset) {
+        glFlushMappedBufferRange(GL_ARRAY_BUFFER, batch->vertex_offset, batch->vertex_cursor - batch->vertex_offset);
+    }
+    batch->vertex_buffer_ptr = 0;
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
+    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+    if (batch->index_cursor != batch->index_offset) {
+        glFlushMappedBufferRange(GL_ELEMENT_ARRAY_BUFFER, batch->index_offset, batch->index_cursor - batch->index_offset);
+    }
+    batch->index_buffer_ptr = 0;
+}
+
+void GFX_sprite_batch_draw(struct FbGfxSpriteBatch *batch)
+{
+    u32 index_offset = batch->index_offset;
+    u32 index_len = batch->index_cursor - index_offset;
+
+    if (index_len > 0) {
+        GFX_set_vertex_buffers(batch->shader, &batch->vertex_buffer, 1, batch->layout);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
+        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_SHORT, (void *)index_offset);
+    }
+}
+
+void GFX_sprite_batch_begin(struct FbGfxSpriteBatch *batch)
+{
+    GFX_sprite_batch_map_buffers(batch);
+}
+
+void GFX_sprite_batch_end(struct FbGfxSpriteBatch *batch)
+{
+    GFX_sprite_batch_unmap_buffers(batch);
+    GFX_sprite_batch_draw(batch);
+
+    batch->vertex_cursor = 0;
+    batch->index_cursor = 0;
+
+    batch->vertex_offset = 0;
+    batch->index_offset = 0;
+}
+
+
+
+void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader, struct FbGfxInputLayout *layout, void *vertices, u64 vertex_size, u16 *indices, u64 index_size)
+{
+    if (batch->shader->program != shader->program || batch->layout != layout) {
+        GFX_sprite_batch_unmap_buffers(batch);
+        GFX_sprite_batch_draw(batch);
+        GFX_sprite_batch_map_buffers(batch);
+        
+        batch->vertex_offset = batch->vertex_cursor;
+        batch->index_offset = batch->index_cursor;
+
+        batch->shader = shader;
+        batch->layout = layout;
+    }
+
+    if (batch->vertex_cursor + vertex_size > batch->vertex_buffer_size ||
+        batch->index_cursor + index_size * 2 > batch->index_buffer_size)
+    {
+        GFX_sprite_batch_unmap_buffers(batch);
+        GFX_sprite_batch_draw(batch);
+        GFX_sprite_batch_map_buffers(batch);
+
+        
+        batch->vertex_cursor = 0;
+        batch->index_cursor = 0;
+
+        batch->vertex_offset = 0;
+        batch->index_offset = 0;
+    }
+
+    memcpy((char *)batch->vertex_buffer_ptr + batch->vertex_offset, vertices, vertex_size);
+    memcpy((char *)batch->index_buffer_ptr + batch->index_offset, indices, index_size * 2);
+
+    batch->vertex_cursor += vertex_size;
+    batch->index_cursor += index_size * 2;
 }
 
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader *shader)

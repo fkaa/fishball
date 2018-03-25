@@ -36,6 +36,9 @@ void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 void   (*FB_glBindBuffer)(GLenum target, GLuint buffer);
 void  *(*FB_glMapBuffer)(GLenum target, GLenum access);
+void   (*FB_glUnmapBuffer)(GLenum target);
+void  *(*FB_glMapBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access);
+void   (*FB_glFlushMappedBufferRange)(GLenum target, GLintptr offset, GLsizeiptr length);
 void   (*FB_glBindBufferRange)(GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size);
 void   (*FB_glBindBufferBase)(GLenum target, GLuint index, GLuint buffer);
 void   (*FB_glBufferData)(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
@@ -70,6 +73,7 @@ void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alph
 void   (*FB_glClear)(GLenum targets);
 
 void   (*FB_glDrawArrays)(GLenum primitive, GLint first, GLsizei count);
+void   (*FB_glDrawElements)(GLenum primitive, GLsizei count, GLenum type, const GLvoid *indices);
 
 void FBGL_debug_callback(GLenum source,
                          GLenum type,
@@ -119,6 +123,9 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glDeleteBuffers);
     LoadProc(glBindBuffer);
     LoadProc(glMapBuffer);
+    LoadProc(glUnmapBuffer);
+    LoadProc(glMapBufferRange);
+    LoadProc(glFlushMappedBufferRange);
     LoadProc(glBindBufferRange);
     LoadProc(glBindBufferBase);
     LoadProc(glBufferData);
@@ -152,6 +159,7 @@ enum FbErrorCode FBGL_load_procs()
     LoadProc(glClearColor);
     LoadProc(glClear);
     LoadProc(glDrawArrays);
+    LoadProc(glDrawElements);
 
     char *version = glGetString(GL_VERSION);
     char *vendor = glGetString(GL_VENDOR);

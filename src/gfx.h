@@ -89,16 +89,29 @@ struct FbGfxSpriteBatch {
     struct FbGfxShader *shader;
     struct FbGfxInputLayout *layout;
 
-    struct FbGfxBuffer *vertex_buffer;
-    struct FbGfxBuffer *index_buffer;
+
+    struct FbGfxBuffer vertex_buffer;
+    struct FbGfxBuffer index_buffer;
 
     void *vertex_buffer_ptr;
     void *index_buffer_ptr;
+
+    u32 vertex_buffer_size;
+    u32 index_buffer_size;
+
+    u32 vertex_offset;
+    u32 index_offset;
+
+    u32 vertex_cursor;
+    u32 index_cursor;
 };
 
 enum FbErrorCode;
 
 enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch);
+void GFX_sprite_batch_begin(struct FbGfxSpriteBatch *batch);
+void GFX_sprite_batch_end(struct FbGfxSpriteBatch *batch);
+void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader, struct FbGfxInputLayout *layout, void *vertices, u64 vertex_size, u16 *indices, u64 index_size); 
 
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, u32 count, struct FbGfxShader *shader);
 enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout);
