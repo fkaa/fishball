@@ -5,7 +5,11 @@ in vec3 TexCoordPS;
 
 out vec4 Color;
 
+uniform sampler2DArray Texture;
+
 void main()
 {
-    Color = ColorPS * TexCoordPS.xyzz;
+    float a = texelFetch(Texture, ivec3(TexCoordPS.xyz), 0).r;
+
+    Color = vec4(ColorPS.rgb, a * ColorPS.a);
 }

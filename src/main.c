@@ -22,6 +22,7 @@ enum FbErrorCode run()
         return ERR_fmt(FB_ERR_REMOTERY_INIT, "Could not initialize remotery");
     }
 
+    u32 width = 800, height = 600;
     struct FbWindow *wnd = 0;
     window_new((struct FbWindowConfig) { .width = 800, .height = 600, .title = "Test Window" }, &wnd);
     window_cxt(wnd);
@@ -44,26 +45,16 @@ enum FbErrorCode run()
     struct FbGfxSpriteBatch batch;
     GFX_create_sprite_batch(KiB(2048), KiB(512), &batch);
 
-    struct FbFontStore *store;
-    struct FbFont font;
+    struct FbFont *font;
 
-    FONT_create_font_store(&store);
     FONT_load_font(table, "unifont", &font);
-    FONT_stuff(store, &font);
-
     FONT_enable_drawing();
-    FONT_draw_string(&font, "test", 10, 10);
-    //struct FbGfxBatch *batch;
-    // triangles, blend state etc.
-    //GFX_create_batch(size, layout, shader);
 
     for (int i = 0; i < 32; i++) {
         for (int j = 0; j < 32; j++) {
             for (int k = 0; k < 32; k++) {
                 if (rand() % 8 == 0)
                 VXL_set_voxel(world, i, j, k, (struct FbVoxel) { .type = rand() });
-                //struct FbVoxel voxel = VXL_find_voxel(world, i, j, k);
-                //printf("%d, ", voxel.type);
             }
         }
     }
@@ -115,10 +106,14 @@ enum FbErrorCode run()
 
     struct FbMatrix4 proj = mat4_perspective_RH(60.f * 3.14f/180.f, 800.f / 600.f, .01f, 100.f);
     struct FbMatrix4 view = mat4_look_at_RH((struct FbVec3){10, 10, 10}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
+    struct FbMatrix4 ortho = mat4_ortho_RH(0, height, 0, width, 0.f, 1.f);
+
+    GFX_sprite_batch_set_transform(&batch, ortho);
 
     printf("%d\n", ARRAY_size(vertices));
     glViewport(0, 0, 800, 600);
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     float t = 0.f;
     while (window_open(wnd)) {
         rmt_BeginCPUSample(frame, 0); 
@@ -129,12 +124,18 @@ enum FbErrorCode run()
         glClearColor(.2f, .22f, .4f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glUseProgram(shader.program);
+        glEnable(GL_DEPTH_TEST);
+        /*glUseProgram(shader.program);
         GFX_set_vertex_buffers(&shader, &buffer, 1, &layout);
         GFX_set_uniform_buffers(&shader, bindings, 1);
-        GFX_draw(ARRAY_size(vertices));
+        GFX_draw(ARRAY_size(vertices));*/
 
+        glDisable(GL_DEPTH_TEST);
         GFX_sprite_batch_begin(&batch);
+        char time_str[32];
+        snprintf(time_str, sizeof(time_str), "t: %.3f", t);
+        FONT_draw_string(font, &batch, time_str, 10, 10, 0xffffffff);
+        FONT_draw_string(font, &batch, "asdfasdf", 10, 26, 0xff22ff44);
         GFX_sprite_batch_end(&batch);
 
         window_swap(wnd);

@@ -18,12 +18,31 @@ enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size, 0, FB_GFX_USAGE_DYNAMIC_WRITE);
 
+    struct FbGfxBuffer camera_buffer = {0};
+    {
+        struct FbGfxBufferDesc buffer_desc = {
+            .data = 0,
+            .length = sizeof(struct FbMatrix4),
+            .type = FB_GFX_UNIFORM_BUFFER,
+            .usage = FB_GFX_USAGE_STREAM_WRITE
+        };
+        GFX_create_buffer(&buffer_desc, &camera_buffer);
+    }
+
     *batch = (struct FbGfxSpriteBatch) {
         .shader = 0,
         .layout = 0,
+        .texture_bindings = { 0 },
+        .texture_length = 0,
+
+        .new_shader = 0,
+        .new_layout = 0,
+        .new_texture_bindings = { 0 },
+        .new_texture_length = 0,
 
         .vertex_buffer = { buffers[0], GL_ARRAY_BUFFER },
         .index_buffer = { buffers[1], GL_ELEMENT_ARRAY_BUFFER },
+        .camera_buffer = camera_buffer,
 
         .vertex_buffer_ptr = 0,
         .index_buffer_ptr = 0,
@@ -36,6 +55,9 @@ enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct
 
         .vertex_cursor = 0,
         .index_cursor = 0,
+
+        .current_element = 0,
+        .dirty = false,
     };
 
     return FB_ERR_NONE;
@@ -66,30 +88,38 @@ void GFX_sprite_batch_unmap_buffers(struct FbGfxSpriteBatch *batch)
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, batch->vertex_buffer.buffer);
-    glUnmapBuffer(GL_ARRAY_BUFFER);
     if (batch->vertex_cursor != batch->vertex_offset) {
         glFlushMappedBufferRange(GL_ARRAY_BUFFER, batch->vertex_offset, batch->vertex_cursor - batch->vertex_offset);
     }
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+
     batch->vertex_buffer_ptr = 0;
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
     if (batch->index_cursor != batch->index_offset) {
         glFlushMappedBufferRange(GL_ELEMENT_ARRAY_BUFFER, batch->index_offset, batch->index_cursor - batch->index_offset);
     }
+    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
+
     batch->index_buffer_ptr = 0;
 }
 
 void GFX_sprite_batch_draw(struct FbGfxSpriteBatch *batch)
 {
     u32 index_offset = batch->index_offset;
-    u32 index_len = batch->index_cursor - index_offset;
+    u32 index_len = (batch->index_cursor - index_offset) / sizeof(u32);
 
     if (index_len > 0) {
+        struct FbGfxBufferBinding bindings[] = {
+            { .name = "Camera", .buffer = &batch->camera_buffer, .offset = 0, .length = sizeof(struct FbMatrix4) }
+        };
+
         GFX_set_vertex_buffers(batch->shader, &batch->vertex_buffer, 1, batch->layout);
+        GFX_set_uniform_buffers(batch->shader, bindings, 1);
+        GFX_set_textures(batch->shader, batch->texture_bindings, batch->texture_length);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_SHORT, (void *)index_offset);
+        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_INT, (void *)index_offset);
     }
 }
 
@@ -103,18 +133,49 @@ void GFX_sprite_batch_end(struct FbGfxSpriteBatch *batch)
     GFX_sprite_batch_unmap_buffers(batch);
     GFX_sprite_batch_draw(batch);
 
+    // TODO(fkaa): dont reset?
     batch->vertex_cursor = 0;
     batch->index_cursor = 0;
 
     batch->vertex_offset = 0;
     batch->index_offset = 0;
+    batch->current_element = 0;
 }
 
 
-
-void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader, struct FbGfxInputLayout *layout, void *vertices, u64 vertex_size, u16 *indices, u64 index_size)
+bool GFX_sprite_batch_needs_flush(struct FbGfxSpriteBatch *batch)
 {
-    if (batch->shader->program != shader->program || batch->layout != layout) {
+    if (batch->new_shader != batch->shader) {
+        return true;
+    }
+    
+    if (batch->new_layout != batch->layout) {
+        return true;
+    }
+
+    if (batch->new_texture_length != batch->texture_length) {
+        return true;
+    }
+
+    for (u32 i = 0; i < batch->texture_length; ++i) {
+        struct FbGfxTextureBinding bind = batch->new_texture_bindings[i];
+        struct FbGfxTextureBinding batch_bind = batch->texture_bindings[i];
+
+        if (bind.texture == batch_bind.texture) continue;
+
+        if (bind.texture->name != batch_bind.texture->name ||
+            bind.texture->type != batch_bind.texture->type)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, void *vertices, u64 vertex_count, u64 vertex_size, u32 *indices, u64 index_size)
+{
+    if (GFX_sprite_batch_needs_flush(batch)) {
         GFX_sprite_batch_unmap_buffers(batch);
         GFX_sprite_batch_draw(batch);
         GFX_sprite_batch_map_buffers(batch);
@@ -122,12 +183,14 @@ void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxShader 
         batch->vertex_offset = batch->vertex_cursor;
         batch->index_offset = batch->index_cursor;
 
-        batch->shader = shader;
-        batch->layout = layout;
+        batch->shader = batch->new_shader;
+        batch->layout = batch->new_layout;
+        batch->texture_length = batch->new_texture_length;
+        memcpy(batch->texture_bindings, batch->new_texture_bindings, sizeof(struct FbGfxTextureBinding) * batch->texture_length);
     }
 
     if (batch->vertex_cursor + vertex_size > batch->vertex_buffer_size ||
-        batch->index_cursor + index_size * 2 > batch->index_buffer_size)
+        batch->index_cursor + index_size * sizeof(u32) > batch->index_buffer_size)
     {
         GFX_sprite_batch_unmap_buffers(batch);
         GFX_sprite_batch_draw(batch);
@@ -139,13 +202,37 @@ void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxShader 
 
         batch->vertex_offset = 0;
         batch->index_offset = 0;
+
+        batch->current_element = 0;
     }
 
-    memcpy((char *)batch->vertex_buffer_ptr + batch->vertex_offset, vertices, vertex_size);
-    memcpy((char *)batch->index_buffer_ptr + batch->index_offset, indices, index_size * 2);
+    memcpy((char *)batch->vertex_buffer_ptr + batch->vertex_cursor, vertices, vertex_count * vertex_size);
+    memcpy((char *)batch->index_buffer_ptr + batch->index_cursor, indices, index_size * sizeof(u32));
 
-    batch->vertex_cursor += vertex_size;
-    batch->index_cursor += index_size * 2;
+    batch->current_element += vertex_count;
+    batch->vertex_cursor += vertex_count * vertex_size;
+    batch->index_cursor += index_size * sizeof(u32);
+}
+
+void GFX_sprite_batch_set_transform(struct FbGfxSpriteBatch *batch, struct FbMatrix4 transform)
+{
+    GFX_update_buffer(&batch->camera_buffer, sizeof(transform), &transform);
+}
+
+void GFX_sprite_batch_set_textures(struct FbGfxSpriteBatch *batch, struct FbGfxTextureBinding *bindings, u32 texture_length)
+{
+    memcpy(batch->new_texture_bindings, bindings, sizeof(struct FbGfxTextureBinding) * texture_length);
+    batch->new_texture_length = texture_length;
+}
+
+void GFX_sprite_batch_set_shader(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader)
+{
+    batch->new_shader = shader;
+}
+
+void GFX_sprite_batch_set_layout(struct FbGfxSpriteBatch *batch, struct FbGfxInputLayout *layout)
+{
+    batch->new_layout = layout;
 }
 
 enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader *shader)
@@ -243,6 +330,20 @@ void GFX_set_uniform_buffers(struct FbGfxShader *shader, struct FbGfxBufferBindi
         struct FbGfxBufferBinding binding = buffers[i];
         u32 idx = glGetUniformBlockIndex(shader->program, binding.name);
         glBindBufferRange(GL_UNIFORM_BUFFER, idx, binding.buffer->buffer, binding.offset, binding.length);
+    }
+}
+
+void GFX_set_textures(struct FbGfxShader *shader, struct FbGfxTextureBinding *textures, u32 texture_count)
+{
+    for (u32 i = 0; i < texture_count; ++i) {
+        struct FbGfxTextureBinding binding = textures[i];
+
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(binding.texture->type, binding.texture->name);
+
+        u32 idx = glGetUniformLocation(shader->program, binding.name);
+        glUseProgram(shader->program);
+        glUniform1i(idx, i);
     }
 }
 

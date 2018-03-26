@@ -24,13 +24,16 @@ GLuint (*FB_glGetDebugMessageLog)(GLuint count, GLsizei bufSize, GLenum *sources
 
 void   (*FB_glEnable)();
 void   (*FB_glDisable)();
+void   (*FB_glBlendFunc)(GLenum sfactor, GLenum dfactor);
 GLubyte *(*FB_glGetString)(GLenum name);
 
 void   (*FB_glGenTextures)(GLsizei n, GLuint *textures);
 void   (*FB_glBindTexture)(GLenum target, GLuint texture);
+void   (*FB_glActiveTexture)(GLenum texture);
 void   (*FB_glTexImage3D)(GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid * data);
 void   (*FB_glTexSubImage3D)(GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid * pixels);
 void   (*FB_glPixelStorei)(GLenum pname, GLint param);
+void   (*FB_glTexParameteri)(GLenum target, GLenum pname, GLint param);
 
 void   (*FB_glGenBuffers)(GLsizei n, GLuint *buffers);
 void   (*FB_glDeleteBuffers)(GLsizei n, const GLuint *buffers);
@@ -62,11 +65,13 @@ void   (*FB_glDeleteShader)(GLuint shader);
 
 GLint  (*FB_glGetAttribLocation)(GLuint program, const GLchar *name);
 GLuint (*FB_glGetUniformBlockIndex)(GLuint program, const GLchar *name);
+GLint  (*FB_glGetUniformLocation)(GLuint program, const GLchar *name);
 void   (*FB_glGetProgramiv)(GLuint program, GLenum pname, GLint *params);
 void   (*FB_glGetProgramInfoLog)(GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glGetShaderiv)(GLuint shader, GLenum pname, GLint *params);
 void   (*FB_glGetShaderInfoLog)(GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog);
 void   (*FB_glUseProgram)(GLuint program);
+void   (*FB_glUniform1i)(GLint location, GLint x);
 
 void   (*FB_glViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 void   (*FB_glClearColor)(GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha);
@@ -111,13 +116,16 @@ enum FbErrorCode FBGL_load_procs()
 
     LoadProc(glEnable);
     LoadProc(glDisable);
+    LoadProc(glBlendFunc);
     LoadProc(glGetString);
 
     LoadProc(glGenTextures);
     LoadProc(glBindTexture);
+    LoadProc(glActiveTexture);
     LoadProc(glTexImage3D);
     LoadProc(glTexSubImage3D);
     LoadProc(glPixelStorei);
+    LoadProc(glTexParameteri);
 
     LoadProc(glGenBuffers);
     LoadProc(glDeleteBuffers);
@@ -149,11 +157,13 @@ enum FbErrorCode FBGL_load_procs()
 
     LoadProc(glGetAttribLocation);
     LoadProc(glGetUniformBlockIndex);
+    LoadProc(glGetUniformLocation);
     LoadProc(glGetProgramiv);
     LoadProc(glGetProgramInfoLog);
     LoadProc(glGetShaderiv);
     LoadProc(glGetShaderInfoLog);
     LoadProc(glUseProgram);
+    LoadProc(glUniform1i);
 
     LoadProc(glViewport);
     LoadProc(glClearColor);

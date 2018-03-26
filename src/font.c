@@ -7,33 +7,45 @@
 
 #include <stdlib.h>
 
-struct FbFontStore {
-    u32 texture_array;
+struct FbFont {
+    struct BalFont *bal_font;
+    struct FbGfxTexture texture_array;
 };
 
 enum FbErrorCode FONT_create_font_store(struct FbFontStore **store)
 {
-    u32 texture = 0;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, 1024, 1024, 16, 0, GL_RED, GL_UNSIGNED_BYTE, 0);
-
-    struct FbFontStore fstore;
-    fstore.texture_array = texture;
-
-    *store = malloc(sizeof(**store));
-    **store = fstore;
     return FB_ERR_NONE;
 }
 
-enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id, struct FbFont *font)
+enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id, struct FbFont **font)
 {
     // TODO(fkaa): actually search for `id`
+
     struct BalFont *bfont = (struct BalFont *)BAL_PTR(table->descriptors[0].ref);
     struct FbFont f;
     f.bal_font = bfont;
 
-    *font = f;
+    struct BalBuffer *buffer = (struct BalBuffer *)BAL_PTR(bfont->buffer);
+    u32 layers = buffer->size / (bfont->texture_size * bfont->texture_size);
+    u32 width = bfont->texture_size;
+    u32 height = bfont->texture_size;
+
+    printf("layers: %d, width: %d, height: %d\n", layers, width, height);
+
+    u32 texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, width, height, layers, 0, GL_RED, GL_UNSIGNED_BYTE, buffer->data);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    f.texture_array = (struct FbGfxTexture) { .type = GL_TEXTURE_2D_ARRAY, .name = texture };
+
+    *font = malloc(sizeof(**font));
+    **font = f;
     return FB_ERR_NONE;
 }
 
@@ -54,7 +66,7 @@ enum FbErrorCode FONT_enable_drawing()
     struct FbGfxVertexEntry desc[] = {
         { .name = "PositionVS", .type = FB_GFX_FLOAT,          .count = 3, .normalized = false, .stride = stride, .offset = 0 },
         { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE,  .count = 4, .normalized = true,  .stride = stride, .offset = 3 * sizeof(r32) },
-        { .name = "TexCoordVS", .type = FB_GFX_UNSIGNED_SHORT, .count = 4, .normalized = false, .stride = stride, .offset = 3 * sizeof(r32) + sizeof(u32) },
+        { .name = "TexCoordVS", .type = FB_GFX_FLOAT,   .count = 3, .normalized = false, .stride = stride, .offset = 3 * sizeof(r32) + sizeof(u32) },
     };
     GFX_create_input_layout(desc, 3, &FONT_layout);
 
@@ -105,9 +117,17 @@ bool FONT_find_glyph(struct BalFont *font, u32 codepoint, struct BalGlyph *glyph
     return false;
 }
 
-void FONT_draw_string(struct FbFont *font, const char *string, r32 x, r32 y)
+void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const char *string, r32 x, r32 y, u32 color)
 {
-    u32 color = 0xff000088;
+    struct FbGfxTextureBinding bindings[1] = {
+        { "Texture", &font->texture_array }
+    };
+
+    GFX_sprite_batch_set_shader(batch, &FONT_shader);
+    GFX_sprite_batch_set_layout(batch, &FONT_layout);
+    GFX_sprite_batch_set_textures(batch, bindings, 1);
+
+    //u32 color = 0xff000088;
     r32 cursor_x = x;
     r32 cursor_y = y;
     struct BalGlyph glyph;
@@ -117,12 +137,41 @@ void FONT_draw_string(struct FbFont *font, const char *string, r32 x, r32 y)
         u32 codepoint = c;
         
         if (FONT_find_glyph(font->bal_font, codepoint, &glyph)) {
-            struct FbGlyphVertex top_left = { cursor_x, cursor_y, 0, color, glyph.xoff, glyph.yoff, glyph.layer };
-            struct FbGlyphVertex top_right = { cursor_x + glyph.width, cursor_y, 0, color, glyph.xoff + glyph.width, glyph.yoff, glyph.layer };
-            struct FbGlyphVertex bottom_left = { cursor_x, cursor_y + glyph.height, 0, color, glyph.xoff, glyph.yoff + glyph.height, glyph.layer };
-            struct FbGlyphVertex bottom_right = { cursor_x + glyph.width, cursor_y + glyph.height, 0, color, glyph.xoff + glyph.width, glyph.yoff + glyph.height, glyph.layer };
+            r32 glyph_pos_x = cursor_x + glyph.xoff;
+            r32 glyph_pos_y = cursor_y + glyph.yoff;
 
-            printf("glyph found (%d) for character (%c)\n", glyph.codepoint, c); 
+            struct FbGlyphVertex vertices[4] = {
+                // top left
+                { glyph_pos_x, glyph_pos_y, 0,
+                  color,
+                  glyph.x, glyph.y, glyph.layer
+                },
+                // top right
+                { glyph_pos_x + glyph.width, glyph_pos_y, 0,
+                  color,
+                  glyph.x + glyph.width, glyph.y, glyph.layer
+                },
+                // bottom left
+                { glyph_pos_x, glyph_pos_y + glyph.height, 0,
+                  color,
+                  glyph.x, glyph.y + glyph.height, glyph.layer 
+                },
+                // bottom right
+                { glyph_pos_x + glyph.width, glyph_pos_y + glyph.height, 0,
+                  color,
+                  glyph.x + glyph.width, glyph.y + glyph.height, glyph.layer
+                }
+            };
+
+            u32 offset = batch->current_element;
+
+            u32 indices[6] = {
+                offset + 2, offset + 1, offset + 0,
+                offset + 2, offset + 3, offset + 1
+            };
+
+            GFX_sprite_batch_append(batch, vertices, 4, sizeof(struct FbGlyphVertex), indices, 6);
+
             cursor_x += glyph.xadvance;
         }
     }
@@ -139,6 +188,6 @@ void FONT_stuff(struct FbFontStore *store, struct FbFont *font)
             "layers: %d, width: %d, height: %d\n", layers, width, height);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, store->texture_array);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, font->texture_array.name);
     glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, width, height, layers, GL_RED, GL_UNSIGNED_BYTE, buffer->data);
 }

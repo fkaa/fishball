@@ -16,6 +16,7 @@ struct FbMatrix4 mat4_identity();
 struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b);
 struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far);
 struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct FbVec3 up);
+struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near);
 
 r32 vec3_dot(struct FbVec3 a, struct FbVec3 b)
 {
@@ -140,6 +141,20 @@ struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct
         { X.y,               Y.y,               -Z.y,              0.f },
         { X.z,               Y.z,               -Z.z,              0.f },
         { -vec3_dot(X, pos), -vec3_dot(Y, pos), vec3_dot(Z, pos),  1.f }
+    }};
+}
+
+struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near)
+{
+    r32 w = 1.f / (right - left);
+    r32 h = 1.f / (top - bottom);
+    r32 range = 1.f / (near - far);
+
+    return (struct FbMatrix4) {{
+        { w + w,                0.f,                0.f,          0.f },
+        { 0.f,                  h + h,              0.f,          0.f },
+        { 0.f,                  0.f,                range,        0.f },
+        { -(left + right) * w, -(top + bottom) * h, range * near, 1.f }
     }};
 }
 
