@@ -88,6 +88,7 @@ add_custom_target(
 
 add_dependencies(fishball asset_build)
 
+target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/external/stb")
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
 

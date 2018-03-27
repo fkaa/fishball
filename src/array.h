@@ -20,6 +20,8 @@ struct FbArrayHeader {
     ARRAY_full(array) ? array = ARRAY_grow(array, sizeof(*array), 1) : 0, \
     array[FB_ARRAY_HEADER(array)->size++] = item
 
+#define ARRAY_set_len(array, len) ((array) ? FB_ARRAY_HEADER(array)->size = (len) : 0)
+
 #include <stdio.h>
 // TODO(fkaa): move into .c
 static void *ARRAY_grow(void *arr, int size, int n)

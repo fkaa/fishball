@@ -4,6 +4,9 @@
 #include "mem.h"
 #include "export.h"
 
+#define STB_RECT_PACK_IMPLEMENTATION
+#include "stb_rect_pack.h"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -41,6 +44,7 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
     u32 cursor_x = 0, cursor_y = 0, cursor_z = 0;
 
     struct BalGlyph *local_glyphs = 0;
+    struct stbrp_rect *glyph_rects = 0;
     u8 *local_glyph_data = MEM_virtual_alloc(MiB(100));
 
     struct BalGlyph glyph;
@@ -50,6 +54,7 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
     u16 codepoint = 0;
     u8 width = 0, height = 0;
 
+    // parse the file completely while rasterizing the glyph bitmaps
     while (FILE_readline(f, &line) != -1) {
         char *substring = 0;
         if ((substring = strstr(line, "BBX")) != NULL) {
@@ -90,13 +95,52 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
             glyph.x = cursor_x;
             glyph.y = cursor_y;
 
+            // trim empty space around the glyph
+            u32 trim_l = 255;
+            u32 trim_t = 255;
+            u32 trim_r = 0;
+            u32 trim_b = 0;
+            for (u32 x = 0; x < glyph.width; ++x) {
+                for (u32 y = 0; y < glyph.height; ++y) {
+                    u8 bit = bitmap[x + y * glyph.width];
+
+                    if (bit) {
+                        trim_l = min(x , trim_l);
+                        trim_r = max(x + 1, trim_r);
+
+                        trim_t = min(y , trim_t);
+                        trim_b = max(y  + 1, trim_b);
+                    }
+                }
+            }
+
+            u32 stride = glyph.width;
+            if (trim_l == 255) trim_l = 0;
+            if (trim_t == 255) trim_t = 0;
+
+            glyph.width = trim_r - trim_l;
+            glyph.height = trim_b - trim_t;
+            glyph.xoff += trim_l;
+            glyph.yoff += trim_t;
+
+            struct stbrp_rect glyph_rect = {
+                .id = ARRAY_size(local_glyphs),
+                .w = glyph.width,
+                .h = glyph.height,
+                .x = 0,
+                .y = 0,
+                .was_packed = 0
+            };
+
             ARRAY_push(local_glyphs, glyph);
-            
+            ARRAY_push(glyph_rects, glyph_rect);
+
+            // naively write into big glyph map
             for (u32 x = 0; x < glyph.width; ++x) {
                 for (u32 y = 0; y < glyph.height; ++y) {
                     u32 write_x = x + cursor_x;
                     u32 write_y = y + cursor_y;
-                    local_glyph_data[write_x + write_y * texture_size + (cursor_z * texture_size * texture_size)] = bitmap[x + y * glyph.width];
+                    local_glyph_data[write_x + write_y * texture_size + (cursor_z * texture_size * texture_size)] = bitmap[(trim_l + x) + (trim_t + y) * stride];
                 }
             }
             cursor_x += glyph.width;
@@ -118,10 +162,49 @@ void BDF_parse_bdf(const char *path, u32 texture_size, struct BalGlyph **glyphs,
         }
     }
 
-    *glyphs = local_glyphs;
-    *glyph_data = local_glyph_data;
-    *data_len = (cursor_z == 0 ? 1 : cursor_z) * (texture_size * texture_size);
+    // pack glyphs
+    u8 *final_atlas = MEM_virtual_alloc(MiB(50));
 
+    s32 num_nodes = texture_size * 32;
+    stbrp_node *nodes = malloc(sizeof(*nodes) * num_nodes);
+    stbrp_context *packer_cxt = malloc(sizeof(*packer_cxt));
+
+    u32 sz = 0;
+    u32 texture_page = 0;
+    while ((sz = ARRAY_size(glyph_rects)) > 0) {
+        stbrp_init_target(packer_cxt, texture_size, texture_size, nodes, num_nodes);
+        stbrp_setup_heuristic(packer_cxt, STBRP_HEURISTIC_Skyline_BL_sortHeight);
+        stbrp_pack_rects(packer_cxt, glyph_rects, sz);
+
+        u32 i = sz;
+        while (i > 0) {
+            stbrp_rect r = glyph_rects[i - 1];
+            if (r.was_packed) {
+                struct BalGlyph glyph = local_glyphs[r.id];
+                for (u32 x = 0; x < r.w; ++x) {
+                    for (u32 y = 0; y < r.h; ++y) {
+                        final_atlas[(r.x + x) + (r.y + y) * texture_size + (texture_page * texture_size * texture_size)] = local_glyph_data[(x + glyph.x) + (y + glyph.y) * texture_size + (glyph.layer * texture_size * texture_size)];
+                    }
+                }
+                local_glyphs[r.id].x = r.x;
+                local_glyphs[r.id].y = r.y;
+                local_glyphs[r.id].layer = texture_page;
+
+                glyph_rects[i - 1] = glyph_rects[sz - 1];
+                sz--;
+            }
+            i--;
+        }
+
+        ARRAY_set_len(glyph_rects, sz);
+        texture_page++;
+    }
+
+    *glyphs = local_glyphs;
+    *glyph_data = final_atlas;
+    *data_len = (texture_page == 0 ? 1 : texture_page) * (texture_size * texture_size);
+
+    free(nodes);
     fclose(f);
 }
 
