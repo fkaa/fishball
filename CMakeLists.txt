@@ -93,6 +93,7 @@ target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
 
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/utf8")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/remotery/lib")
 
 target_link_libraries(fishball glfw)

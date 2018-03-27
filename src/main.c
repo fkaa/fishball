@@ -135,7 +135,7 @@ enum FbErrorCode run()
         char time_str[32];
         snprintf(time_str, sizeof(time_str), "t: %.3f", t);
         FONT_draw_string(font, &batch, time_str, 10, 10, 0xffffffff);
-        FONT_draw_string(font, &batch, "asdfasdf", 10, 26, 0xff22ff44);
+        FONT_draw_string(font, &batch, u8"\u300c\u792a\u79aa\u7948\u300d - a\u263bb\u263ac\u2602", 10, 26, 0xff22ff44);
         GFX_sprite_batch_end(&batch);
 
         window_swap(wnd);

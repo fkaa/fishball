@@ -5,6 +5,8 @@
 #include "mem.h"
 #include "shared/error.h"
 
+#include "utf8.h"
+
 #include <stdlib.h>
 
 struct FbFont {
@@ -117,6 +119,21 @@ bool FONT_find_glyph(struct BalFont *font, u32 codepoint, struct BalGlyph *glyph
     return false;
 }
 
+u32 FONT_string_length(struct FbFont *font, const char *string)
+{
+    u32 cursor_x = 0;
+    struct BalGlyph glyph;
+
+    u32 codepoint = 0;
+    while (*string != '\0' && (string = utf8codepoint(string, &codepoint)) != 0) {
+        if (FONT_find_glyph(font->bal_font, codepoint, &glyph)) {
+            cursor_x += glyph.xadvance;
+        }
+    }
+
+    return cursor_x;
+}
+
 void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const char *string, r32 x, r32 y, u32 color)
 {
     struct FbGfxTextureBinding bindings[1] = {
@@ -132,10 +149,8 @@ void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const
     r32 cursor_y = y;
     struct BalGlyph glyph;
 
-    for (u32 i = 0; string[i] != '\0'; ++i) {
-        char c = string[i];
-        u32 codepoint = c;
-        
+    u32 codepoint = 0;
+    while (*string != '\0' && (string = utf8codepoint(string, &codepoint)) != 0) {
         if (FONT_find_glyph(font->bal_font, codepoint, &glyph)) {
             r32 glyph_pos_x = cursor_x + glyph.xoff;
             r32 glyph_pos_y = cursor_y + glyph.yoff;

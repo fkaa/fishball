@@ -29,6 +29,7 @@ enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id
 enum FbErrorCode FONT_enable_drawing();
 enum FbErrorCode FONT_disable_drawing();
 
+u32 FONT_string_length(struct FbFont *font, const char *string);
 void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const char *string, r32 x, r32 y, u32 color);
 void FONT_stuff(struct FbFontStore *store, struct FbFont *font);
 
