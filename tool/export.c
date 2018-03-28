@@ -4,6 +4,7 @@
 #include "time.h"
 #include "toml.h"
 #include "bdf.h"
+#include "helper.h"
 #include "shared/error.h"
 
 #include <stdio.h>
@@ -54,7 +55,7 @@ char* readable_bytes(double size/*in bytes*/, char *buf) {
         size /= 1024;
         i++;
     }
-    sprintf(buf, "%.*f %s", i, size, units[i]);
+    snprintf(buf, 32, "%.*f %s", i, size, units[i]);
     return buf;
 }
 
@@ -93,6 +94,8 @@ enum FbErrorCode BAL_process_conv(struct BalExporter *exporter, const char *path
                 s64 start = TIME_current();
                 struct BalFont *font = BAL_export_font(exporter, file_path);
                 s64 time = TIME_current() - start;
+
+                HELPER_write_file_hash(file_path);
 
                 ARRAY_push(exporter->fonts, font);
     
@@ -158,7 +161,7 @@ enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter)
     char output[256];
     const char *name = 0;
     if (!(name = toml_raw_in(pkg, "name"))) {
-        snprintf(output, sizeof(output), "fish.bal", name);
+        snprintf(output, sizeof(output), "fish.bal");
     }
     else {
         char *str = 0;

@@ -38,8 +38,12 @@ set(FISHCONV_SOURCES
     tool/time.h
     tool/time.c
 
+
+    tool/helper.c
+    tool/helper.h
     tool/mem.c
     tool/mem.h
+    src/file.c
 
     "${TOML_SOURCES}"
 )
@@ -92,6 +96,8 @@ target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/external/stb"
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
 
+
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/utf8")
