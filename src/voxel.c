@@ -1,5 +1,6 @@
 #include "voxel.h"
 #include "array.h"
+#include "gfx.h"
 
 #include "shared\types.h"
 
@@ -10,6 +11,12 @@ struct FbVoxelMemory {
     struct FbVoxelChunkPage *chunk_pages;
 };
 
+struct FbVoxelChunk {
+    struct FbVoxelChunkPage slices[VIRTUAL_CHUNK_COUNT];
+    struct FbGfxBuffer vertex_buffer;
+    bool dirty;
+};
+
 struct FbVoxelWorld {
     struct FbVoxelMemory memory;
 
@@ -17,6 +24,9 @@ struct FbVoxelWorld {
     unsigned long long *chunk_keys;
     struct FbVoxelChunk *chunks;
 };
+
+struct FbGfxShader VXL_shader = {0};
+struct FbGfxInputLayout VXL_layout = {0};
 
 static unsigned long long VXL_encode_chunk_key(int cx, int cy, int cz);
 
@@ -33,15 +43,19 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
 {
     struct FbVoxelWorld w = {0};
 
-    /*for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
-        struct FbVoxelChunkPage page = (struct FbVoxelChunkPage) { .voxels = malloc(VIRTUAL_CHUNK_VOLUME) };
-        ARRAY_push(w.memory.chunk_pages, page);
-    }
-    for (int i = 0; i < VIRTUAL_CHUNK_COUNT; i++) {
-        for (int j = 0; j < VIRTUAL_CHUNK_VOLUME; j++) {
-            w.memory.chunk_pages[i].voxels[j] = (struct FbVoxel) { .type = (i * j) % 255 };
-        }
-    }*/
+    // TODO(fkaa): move elsewhere
+    struct FbGfxShaderFile files[] = {
+        { .path = "asset/shader/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
+        { .path = "asset/shader/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
+    };
+    GFX_load_shader_files(files, 2, &VXL_shader);
+
+    struct FbGfxVertexEntry desc[] = {
+        { .name = "PositionVS", .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 0 },
+        { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 4 * sizeof(u8) },
+        { .name = "NormalVS",   .type = FB_GFX_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 8 * sizeof(u8) },
+    };
+    GFX_create_input_layout(desc, 3, &VXL_layout);
 
     w.num_chunks = 1;
     ARRAY_push(w.chunk_keys, VXL_encode_chunk_key(0, 0, 0));
