@@ -53,7 +53,7 @@ set(FISHBALL_SOURCES
     src/shared/error.h
     src/shared/error.c
     src/mathtypes.h
-    src/math.h
+    src/mathimpl.h
     src/main.c
     src/array.h
     src/file.h

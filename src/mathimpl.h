@@ -5,56 +5,81 @@
 
 #include <math.h>
 
-r32 vec3_length(struct FbVec3 vec);
-r32 vec3_dot(struct FbVec3 a, struct FbVec3 b);
-struct FbVec3 vec3_normalize(struct FbVec3 vec);
-struct FbVec3 vec3_cross(struct FbVec3 a, struct FbVec3 b);
-struct FbVec3 vec3_sub(struct FbVec3 a, struct FbVec3 b);
-struct FbVec3 vec3_mul(struct FbVec3 a, struct FbVec3 b);
-struct FbVec3 vec3_mul_scalar(struct FbVec3 a, r32 s);
-struct FbMatrix4 mat4_identity();
-struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b);
-struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far);
-struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct FbVec3 up);
-struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near);
+static r32 vec3_length(struct FbVec3 vec);
+static r32 vec3_dot(struct FbVec3 a, struct FbVec3 b);
+static struct FbVec3 vec3_normalize(struct FbVec3 vec);
+static struct FbVec3 vec3_cross(struct FbVec3 a, struct FbVec3 b);
+static struct FbVec3 vec3_sub(struct FbVec3 a, struct FbVec3 b);
+static struct FbVec3 vec3_mul(struct FbVec3 a, struct FbVec3 b);
+static struct FbVec3 vec3_mul_scalar(struct FbVec3 a, r32 s);
 
-r32 vec3_dot(struct FbVec3 a, struct FbVec3 b)
+static struct FbVec4 vec4_adds(struct FbVec4 a, r32 s);
+static struct FbVec4 vec4_muls(struct FbVec4 a, r32 s);
+static struct FbVec4 vec4_transform(struct FbVec4 a, struct FbMatrix4 b);
+
+static struct FbMatrix4 mat4_identity();
+static struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b);
+static struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far);
+static struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct FbVec3 up);
+static struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near);
+
+static r32 vec3_dot(struct FbVec3 a, struct FbVec3 b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-r32 vec3_length(struct FbVec3 vec)
+static r32 vec3_length(struct FbVec3 vec)
 {
-    return sqrtf(vec3_dot(vec, vec));
+    return sqrt(vec3_dot(vec, vec));
 }
 
-struct FbVec3 vec3_normalize(struct FbVec3 vec)
+static struct FbVec3 vec3_normalize(struct FbVec3 vec)
 {
     return vec3_mul_scalar(vec, 1.f / vec3_length(vec));
 }
 
-struct FbVec3 vec3_cross(struct FbVec3 a, struct FbVec3 b)
+static struct FbVec3 vec3_cross(struct FbVec3 a, struct FbVec3 b)
 {
     return (struct FbVec3) { .x = (a.y * b.z - a.z * b.y) , .y = (a.z * b.x - a.x * b.z), .z = (a.x * b.y - a.y * b.x) };
 }
 
-struct FbVec3 vec3_sub(struct FbVec3 a, struct FbVec3 b)
+static struct FbVec3 vec3_sub(struct FbVec3 a, struct FbVec3 b)
 {
     return (struct FbVec3) { a.x - b.x, a.y - b.y, a.z - b.z };
 }
 
-struct FbVec3 vec3_mul(struct FbVec3 a, struct FbVec3 b)
+static struct FbVec3 vec3_mul(struct FbVec3 a, struct FbVec3 b)
 {
     return (struct FbVec3) { a.x * b.x, a.y * b.y, a.z * b.z };
 }
 
 
-struct FbVec3 vec3_mul_scalar(struct FbVec3 a, r32 s)
+static struct FbVec3 vec3_mul_scalar(struct FbVec3 a, r32 s)
 {
     return (struct FbVec3) { a.x * s, a.y * s, a.z * s };
 }
 
-struct FbMatrix4 mat4_identity()
+static struct FbVec4 vec4_adds(struct FbVec4 a, r32 s)
+{
+    return (struct FbVec4) { a.x + s, a.y + s, a.z + s, a.w + s };
+}
+
+static struct FbVec4 vec4_muls(struct FbVec4 a, r32 s)
+{
+    return (struct FbVec4) { a.x * s, a.y * s, a.z * s, a.w * s };
+}
+
+static struct FbVec4 vec4_transform(struct FbVec4 a, struct FbMatrix4 b)
+{
+    return (struct FbVec4) {
+        (a.x * b.m[0][0]) + (a.y * b.m[1][0]) + (a.z * b.m[2][0]) + (a.w * b.m[3][0]),
+        (a.x * b.m[0][1]) + (a.y * b.m[1][1]) + (a.z * b.m[2][1]) + (a.w * b.m[3][1]),
+        (a.x * b.m[0][2]) + (a.y * b.m[1][2]) + (a.z * b.m[2][2]) + (a.w * b.m[3][2]),
+        (a.x * b.m[0][3]) + (a.y * b.m[1][3]) + (a.z * b.m[2][3]) + (a.w * b.m[3][3]),
+    };
+}
+
+static struct FbMatrix4 mat4_identity()
 {
     return (struct FbMatrix4) {{
         { 1.f, 0.f, 0.f, 0.f },
@@ -64,7 +89,7 @@ struct FbMatrix4 mat4_identity()
     }};
 }
 
-struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b)
+static struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b)
 {
     struct FbMatrix4 m;
 
@@ -111,7 +136,7 @@ struct FbMatrix4 mat4_mul(struct FbMatrix4 a, struct FbMatrix4 b)
     return m;
 }
 
-struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far)
+static struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far)
 {
     r32 sinfov = sinf(fov * 0.5f),
         cosfov = cosf(fov * 0.5f);
@@ -130,7 +155,7 @@ struct FbMatrix4 mat4_perspective_RH(r32 fov, r32 aspect, r32 near, r32 far)
 }
 
 
-struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct FbVec3 up)
+static struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct FbVec3 up)
 {
     struct FbVec3 Z = vec3_normalize(vec3_sub(target, pos));
     struct FbVec3 X = vec3_normalize(vec3_cross(Z, up));
@@ -144,7 +169,7 @@ struct FbMatrix4 mat4_look_at_RH(struct FbVec3 pos, struct FbVec3 target, struct
     }};
 }
 
-struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near)
+static struct FbMatrix4 mat4_ortho_RH(r32 top, r32 bottom, r32 left, r32 right, r32 far, r32 near)
 {
     r32 w = 1.f / (right - left);
     r32 h = 1.f / (top - bottom);

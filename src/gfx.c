@@ -1,11 +1,78 @@
 #include "gfx.h"
 #include "fbgl.h"
 #include "file.h"
+#include "array.h"
+#include "mathimpl.h"
+#include "font.h"
 
 #include "shared/error.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+
+struct FbGfxDebugText {
+    r32 x, y, z;
+    u32 color;
+    char msg[128];
+};
+
+struct FbGfxDebugText *GFX_debug_messages = 0;
+
+static struct FbVec4 GFX_transform_to_screen(struct FbMatrix4 cam, struct FbVec4 pos, bool *clip)
+{
+    struct FbVec4 p = vec4_transform(pos, cam);
+
+    // hmm
+    if (p.w == .0f) p.w = 1.f;
+
+    p = vec4_muls(p, 1.f / p.w);
+    p = vec4_adds(vec4_muls(p, .5f), .5f);
+
+    if (clip && p.z > 1.f) {
+        *clip = true;
+    }
+
+    p.y = 1.f - p.y;
+    p.x *= 800.f;
+    p.y *= 600.f;
+
+
+    return p;
+}
+
+void GFX_debug_text(r32 x, r32 y, r32 z, u32 color, const char *fmt, ...)
+{
+    struct FbGfxDebugText text = {
+        .x = x,
+        .y = y,
+        .z = z,
+        .color = color,
+        .msg = {0}
+    };
+
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(text.msg, sizeof(text.msg), fmt, args);
+    va_end(args);
+
+    ARRAY_push(GFX_debug_messages, text);
+}
+
+void GFX_debug_draw(struct FbGfxSpriteBatch *batch, struct FbFont *font, struct FbMatrix4 cam)
+{
+    for (u32 i = 0; i < ARRAY_size(GFX_debug_messages); ++i) {
+        struct FbGfxDebugText *text = &GFX_debug_messages[i];
+        bool clip = false;
+        struct FbVec4 pos = GFX_transform_to_screen(cam, (struct FbVec4) { text->x, text->y, text->z, 1.f }, &clip);
+
+        if (!clip) {
+            FONT_draw_string(font, batch, text->msg, pos.x, pos.y, text->color);
+        }
+    }
+    ARRAY_reset(GFX_debug_messages);
+}
+
 
 enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch)
 {
@@ -47,8 +114,8 @@ enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct
         .vertex_buffer_ptr = 0,
         .index_buffer_ptr = 0,
 
-        .vertex_buffer_size = vertex_size,
-        .index_buffer_size = index_size,
+        .vertex_buffer_size = (u32)vertex_size,
+        .index_buffer_size = (u32)index_size,
 
         .vertex_offset = 0,
         .index_offset = 0,
@@ -119,7 +186,7 @@ void GFX_sprite_batch_draw(struct FbGfxSpriteBatch *batch)
         GFX_set_textures(batch->shader, batch->texture_bindings, batch->texture_length);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_INT, (void *)index_offset);
+        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_INT, (void *)(u64)index_offset);
     }
 }
 
@@ -209,9 +276,9 @@ void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, void *vertices, u64
     memcpy((char *)batch->vertex_buffer_ptr + batch->vertex_cursor, vertices, vertex_count * vertex_size);
     memcpy((char *)batch->index_buffer_ptr + batch->index_cursor, indices, index_size * sizeof(u32));
 
-    batch->current_element += vertex_count;
-    batch->vertex_cursor += vertex_count * vertex_size;
-    batch->index_cursor += index_size * sizeof(u32);
+    batch->current_element += (u32)vertex_count;
+    batch->vertex_cursor += (u32)vertex_count * (u32)vertex_size;
+    batch->index_cursor += (u32)index_size * sizeof(u32);
 }
 
 void GFX_sprite_batch_set_transform(struct FbGfxSpriteBatch *batch, struct FbMatrix4 transform)

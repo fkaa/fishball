@@ -123,6 +123,10 @@ struct FbGfxSpriteBatch {
 
 enum FbErrorCode;
 
+// debug
+void GFX_debug_text(r32 x, r32 y, r32 z, u32 color, const char *fmt, ...);
+void GFX_debug_draw(struct FbGfxSpriteBatch *batch, struct FbFont *font, struct FbMatrix4 cam);
+
 // sprite batch
 enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch);
 void GFX_sprite_batch_begin(struct FbGfxSpriteBatch *batch);

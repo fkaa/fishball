@@ -64,7 +64,7 @@ enum FbErrorCode FONT_enable_drawing()
     };
     GFX_load_shader_files(files, 2, &FONT_shader);
 
-    u64 stride = sizeof(struct FbGlyphVertex);
+    u32 stride = sizeof(struct FbGlyphVertex);
     struct FbGfxVertexEntry desc[] = {
         { .name = "PositionVS", .type = FB_GFX_FLOAT,          .count = 3, .normalized = false, .stride = stride, .offset = 0 },
         { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE,  .count = 4, .normalized = true,  .stride = stride, .offset = 3 * sizeof(r32) },
@@ -159,22 +159,22 @@ void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const
                 // top left
                 { glyph_pos_x, glyph_pos_y, 0,
                   color,
-                  glyph.x, glyph.y, glyph.layer
+                  (r32)glyph.x, (r32)glyph.y, (r32)glyph.layer
                 },
                 // top right
-                { glyph_pos_x + glyph.width, glyph_pos_y, 0,
+                { glyph_pos_x + (r32)glyph.width, glyph_pos_y, 0,
                   color,
-                  glyph.x + glyph.width, glyph.y, glyph.layer
+                  (r32)(glyph.x + glyph.width), (r32)glyph.y, (r32)glyph.layer
                 },
                 // bottom left
                 { glyph_pos_x, glyph_pos_y + glyph.height, 0,
                   color,
-                  glyph.x, glyph.y + glyph.height, glyph.layer 
+                  (r32)glyph.x, (r32)(glyph.y + glyph.height), (r32)glyph.layer 
                 },
                 // bottom right
                 { glyph_pos_x + glyph.width, glyph_pos_y + glyph.height, 0,
                   color,
-                  glyph.x + glyph.width, glyph.y + glyph.height, glyph.layer
+                  (r32)(glyph.x + glyph.width), (r32)(glyph.y + glyph.height), (r32)glyph.layer
                 }
             };
 

@@ -3,7 +3,7 @@
 #include "voxel.h"
 #include "array.h"
 #include "gfx.h"
-#include "math.h"
+#include "mathimpl.h"
 #include "font.h"
 #include "bal.h"
 #include "mem.h"
@@ -117,25 +117,28 @@ enum FbErrorCode run()
     float t = 0.f;
     while (window_open(wnd)) {
         rmt_BeginCPUSample(frame, 0); 
-        view = mat4_look_at_RH((struct FbVec3){sinf(t)*50, sin(t*0.2)*70, cosf(t)*50}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
+        view = mat4_look_at_RH((struct FbVec3){sinf(t)*50, sinf(t*0.2)*70, cosf(t)*50}, (struct FbVec3){0, 0, 0}, (struct FbVec3){0, 1, 0});
         struct FbMatrix4 mat = mat4_mul(view, proj);
         GFX_update_buffer(&camera_buffer, sizeof(mat), &mat);
 
         glClearColor(.2f, .22f, .4f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        GFX_debug_text(8, 8, 8, 0xffff55ff, "(%d,%d,%d)", 0, 0, 0); 
         glEnable(GL_DEPTH_TEST);
-        /*glUseProgram(shader.program);
+        glUseProgram(shader.program);
         GFX_set_vertex_buffers(&shader, &buffer, 1, &layout);
         GFX_set_uniform_buffers(&shader, bindings, 1);
-        GFX_draw(ARRAY_size(vertices));*/
-
+        GFX_draw(ARRAY_size(vertices));
         glDisable(GL_DEPTH_TEST);
+
         GFX_sprite_batch_begin(&batch);
         char time_str[32];
         snprintf(time_str, sizeof(time_str), "t: %.3f", t);
         FONT_draw_string(font, &batch, time_str, 10, 10, 0xffffffff);
         FONT_draw_string(font, &batch, u8"\u300c\u792a\u79aa\u7948\u300d - a\u263bb\u263ac\u2602", 10, 26, 0xff22ff44);
+
+        GFX_debug_draw(&batch, font, mat4_mul(view, proj));
         GFX_sprite_batch_end(&batch);
 
         window_swap(wnd);
