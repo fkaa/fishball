@@ -10,6 +10,7 @@ struct BalExporter {
     toml_table_t *toml;
 
     struct BalFont **fonts;
+    struct BalSpirv **shaders;
 };
 
 #define BAL_ALIGN(pointer) \
@@ -27,3 +28,5 @@ enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter);
 struct BalDescriptorTable *BAL_allocate_descriptor_table(struct BalExporter *exporter, u32 size);
 struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size);
 struct BalBuffer *BAL_allocate_buffer(struct BalExporter *exporter, u32 size);
+
+struct BalSpirv *BAL_allocate_spirv(struct BalExporter *exporter, const char *name, u8 *data, u32 size);

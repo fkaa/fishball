@@ -1,3 +1,6 @@
+#ifndef BAL_BAL_H
+#define BAL_BAL_H
+
 #include "shared/types.h"
 
 #define BAL_PTR(ref) \
@@ -20,7 +23,8 @@ enum {
 };
 
 enum {
-    BAL_TYPE_FONT = BAL_FOURCC('FONT')
+    BAL_TYPE_FONT = BAL_FOURCC('FONT'),
+    BAL_TYPE_SPRV = BAL_FOURCC('SPRV')
 };
 
 struct BalRef {
@@ -30,11 +34,14 @@ struct BalRef {
 BAL_REF_TYPE(BalDescriptorTable)
 BAL_REF_TYPE(BalBuffer)
 BAL_REF_TYPE(BalFont)
+BAL_REF_TYPE(BalString)
 
 struct BalDescriptor {
     u32 type;
     struct BalRef ref;
 };
+
+typedef char * BalString;
 
 struct BalDescriptorTable {
     u32 descriptor_count;
@@ -68,7 +75,24 @@ struct BalFont {
     struct BalGlyph glyphs[1];
 };
 
+enum BalShaderStage {
+    BAL_SHADER_VERTEX,
+    BAL_SHADER_PIXEL,
+};
+
+typedef struct VkShaderModule_T *VkShaderModule;
+
+struct BalSpirv {
+    enum BalShaderStage stage;
+    VkShaderModule module;
+    union BalStringRef name;
+    union BalBufferRef layout;
+    union BalBufferRef buffer;
+};
+
 struct BalHeader {
     u32 magic;
     union BalDescriptorTableRef descriptor_tables;
 };
+
+#endif /* BAL_BAL_H */

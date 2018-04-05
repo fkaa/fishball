@@ -1,11 +1,12 @@
-#version 150 core
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
 
-in vec4 ColorPS;
-in vec3 TexCoordPS;
+layout(location = 0) in vec4 ColorPS;
+layout(location = 1) in vec3 TexCoordPS;
 
-out vec4 Color;
+layout(location = 0) out vec4 Color;
 
-uniform sampler2DArray Texture;
+layout(binding = 1) uniform sampler2DArray Texture;
 
 void main()
 {

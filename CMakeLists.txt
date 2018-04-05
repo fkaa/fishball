@@ -10,6 +10,9 @@ option(GLFW_BUILD_EXAMPLES OFF)
 option(GLFW_BUILD_TESTS OFF)
 OPTION(GLFW_BUILD_DOCS OFF)
 OPTION(GLFW_INSTALL OFF)
+OPTION(GLFW_VULKAN_STATIC ON)
+
+find_package(Vulkan REQUIRED)
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/external/glfw" ${CMAKE_BINARY_DIR}/glfw/)
 
@@ -19,6 +22,14 @@ set(TOML_INCLUDE_DIR
 set(TOML_SOURCES
     external/toml/toml.h
     external/toml/toml.c
+)
+
+set(SPIRV_INCLUDE_DIR
+    external/SPIRV-Reflect/
+)
+set(SPIRV_SOURCES
+    "${SPIRV_INCLUDE_DIR}/spirv_reflect.h"
+    "${SPIRV_INCLUDE_DIR}/spirv_reflect.c"
 )
 
 set(FISHCONV_SOURCES
@@ -37,6 +48,8 @@ set(FISHCONV_SOURCES
     tool/bdf.c
     tool/time.h
     tool/time.c
+    tool/spirv.h
+    tool/spirv.c
 
 
     tool/helper.c
@@ -46,6 +59,7 @@ set(FISHCONV_SOURCES
     src/file.c
 
     "${TOML_SOURCES}"
+    "${SPIRV_SOURCES}"
 )
 
 set(FISHBALL_SOURCES
@@ -95,12 +109,15 @@ add_dependencies(fishball asset_build)
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/external/stb")
 target_include_directories(fishconv PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishconv PRIVATE "${TOML_INCLUDE_DIR}")
+target_include_directories(fishconv PRIVATE "${Vulkan_INCLUDE_DIRS}")
+target_include_directories(fishconv PRIVATE "${SPIRV_INCLUDE_DIR}")
 
 
+target_include_directories(fishball PRIVATE "${Vulkan_INCLUDE_DIRS}")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/src")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/utf8")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/remotery/lib")
 
-target_link_libraries(fishball glfw)
+target_link_libraries(fishball glfw ${VULKAN_LIBRARY})

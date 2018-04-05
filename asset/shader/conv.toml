@@ -1,0 +1,11 @@
+[[spirv]]
+name = "font_vertex"
+source = "font.glslv"
+stage = "vert"
+args = ""
+
+[[spirv]]
+name = "font_pixel"
+source = "font.glslf"
+stage = "frag"
+args = ""

@@ -4,6 +4,91 @@
 #include "shared/types.h"
 #include "mathtypes.h"
 
+// TODO(fkaa): yuck.. gfxtypes.h?
+#include <vulkan/vulkan.h>
+
+enum FbErrorCode;
+
+typedef u64 FbGfxStateBits;
+
+#define FB_STATE_SRCBLEND_ONE                 (0ull << 0)
+#define FB_STATE_SRCBLEND_ZERO                (1ull << 0)
+#define FB_STATE_SRCBLEND_DST_COLOR           (2ull << 0)
+#define FB_STATE_SRCBLEND_ONE_MINUS_DST_COLOR (3ull << 0)
+#define FB_STATE_SRCBLEND_SRC_ALPHA           (4ull << 0)
+#define FB_STATE_SRCBLEND_ONE_MINUS_SRC_ALPHA (5ull << 0)
+#define FB_STATE_SRCBLEND_DST_ALPHA           (6ull << 0)
+#define FB_STATE_SRCBLEND_ONE_MINUS_DST_ALPHA (7ull << 0)
+#define FB_STATE_SRCBLEND_BITS                (7ull << 0)
+
+#define FB_STATE_DSTBLEND_ONE                 (0ull << 3)
+#define FB_STATE_DSTBLEND_ZERO                (1ull << 3)
+#define FB_STATE_DSTBLEND_DST_COLOR           (2ull << 3)
+#define FB_STATE_DSTBLEND_ONE_MINUS_DST_COLOR (3ull << 3)
+#define FB_STATE_DSTBLEND_SRC_ALPHA           (4ull << 3)
+#define FB_STATE_DSTBLEND_ONE_MINUS_SRC_ALPHA (5ull << 3)
+#define FB_STATE_DSTBLEND_DST_ALPHA           (6ull << 3)
+#define FB_STATE_DSTBLEND_ONE_MINUS_DST_ALPHA (7ull << 3)
+#define FB_STATE_DSTBLEND_BITS                (7ull << 3)
+
+#define FB_STATE_DEPTHFUNC_LESS               (0ull << 13)
+#define FB_STATE_DEPTHFUNC_ALWAYS             (1ull << 13)
+#define FB_STATE_DEPTHFUNC_GREATER            (2ull << 13)
+#define FB_STATE_DEPTHFUNC_EQUAL              (3ull << 13)
+#define FB_STATE_DEPTHFUNC_BITS               (3ull << 13)
+
+#define FB_STATE_CULL_FRONT                   (0ull << 15)
+#define FB_STATE_CULL_BACK                    (1ull << 15)
+#define FB_STATE_CULL_NONE                    (2ull << 15)
+#define FB_STATE_CULL_BITS                    (2ull << 15)
+
+#define FB_STATE_CLOCKWISE                    (1ull << 58)
+#define FB_STATE_BLEND_ENABLE                 (1ull << 59)
+#define FB_STATE_DEPTH_TEST                   (1ull << 60)
+#define FB_STATE_DEPTH_WRITE                  (1ull << 61)
+
+struct FbGpu {
+    VkInstance instance;
+    VkDevice device;
+    VkQueue graphics_queue;
+    VkCommandPool command_pool;
+    VkCommandBuffer *command_buffers;
+};
+
+struct FbGfxPipeline {
+    enum FbGfxStateBits state_bits;
+    VkPipeline pipeline;
+};
+
+struct FbGfxVertexLayout {
+    u32 binding_count;
+    VkVertexInputBindingDescription *bindings;
+    u32 attribute_count;
+    VkVertexInputAttributeDescription *attributes;
+};
+
+struct FbGfxRenderProgramDesc {
+    const char *vsh_name;
+    const char *psh_name;
+    struct FbGfxVertexLayout layout;
+};
+
+struct FbGfxRenderProgram {
+    struct BalSpirv *vsh;
+    struct BalSpirv *psh;
+    struct FbGfxVertexLayout layout;
+    VkDescriptorSetLayout descriptor_layout;
+    VkPipelineLayout pipeline_layout;
+    VkPipeline *cached_pipelines;
+    u64 *pipeline_bits;
+};
+
+struct FbGfxTargetDescription {
+    VkAttachmentDescription desc;
+    VkPipelineColorBlendAttachmentState blend;
+};
+
+
 struct FbGfxBufferDesc {
     u8 *data;
     u32 length;
@@ -121,11 +206,11 @@ struct FbGfxSpriteBatch {
     bool dirty;
 };
 
-enum FbErrorCode;
-
 // debug
 void GFX_debug_text(r32 x, r32 y, r32 z, u32 color, const char *fmt, ...);
 void GFX_debug_draw(struct FbGfxSpriteBatch *batch, struct FbFont *font, struct FbMatrix4 cam);
+
+enum FbErrorCode GFX_create_render_program(struct FbGpu *gpu, struct BalDescriptorTable *table, struct FbGfxRenderProgramDesc desc, struct FbGfxRenderProgram *program);
 
 // sprite batch
 enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch);

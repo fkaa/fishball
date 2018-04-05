@@ -109,6 +109,50 @@ enum FbErrorCode BAL_process_conv(struct BalExporter *exporter, const char *path
         }
     }
 
+    toml_array_t *spirvs = toml_array_in(config, "spirv");
+    if (spirvs) {
+        u32 idx = 0;
+        toml_table_t *spirv = 0;
+        while ((spirv = toml_table_at(spirvs, idx++)) != 0) {
+            char *file = 0;
+            const char *source = 0;
+            if ((source = toml_raw_in(spirv, "source")) != 0) {
+                toml_rtos(source, &file);
+                char *file_path = malloc(strlen(file) + strlen(path) + 1);
+                *file_path = '\0';
+                strcat(file_path, path);
+                file_path[strlen(file_path) - sizeof("conv.toml") + 1] = '\0';
+                strcat(file_path, file);
+                free(file);
+
+                const char *name = 0;
+                if ((name = toml_raw_in(spirv, "name")) != 0) {
+                    char *outname = 0;
+                    toml_rtos(name, &outname);
+                    char *outfile = malloc(strlen(outname) + strlen(path));
+                    *outfile = '\0';
+                    strcat(outfile, path);
+                    outfile[strlen(outfile) - sizeof("conv.toml") + 1] = '\0';
+                    strcat(outfile, outname);
+
+
+                    s64 start = TIME_current();
+                    struct BalSpirv *spv = BAL_compile_glsl(exporter, outname, outfile, file_path, spirv);
+                    s64 time = TIME_current() - start;
+
+                    HELPER_write_file_hash(file_path);
+
+                    ARRAY_push(exporter->shaders, spv);
+                    
+                    printf("%s: %.1fms\n",
+                            outname,
+                            TIME_ms(time));
+                }
+            }
+        }
+    }
+
+
     return FB_ERR_NONE;
 }
 
@@ -179,6 +223,7 @@ enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter)
 
     u32 size = 0;
     size += ARRAY_size(exporter->fonts);
+    size += ARRAY_size(exporter->shaders);
     struct BalDescriptorTable *table = BAL_allocate_descriptor_table(exporter, size);
     table->descriptor_count = size;
 
@@ -188,6 +233,14 @@ enum FbErrorCode BAL_exporter_write(struct BalExporter *exporter)
         desc->type = BAL_TYPE_FONT;
         struct BalFont *font = exporter->fonts[i];
         BAL_SET_REF_PTR(desc->ref, font);
+        table_index++;
+    }
+
+    for (u32 i = 0; i < ARRAY_size(exporter->shaders); ++i) {
+        struct BalDescriptor *desc = &table->descriptors[table_index];
+        desc->type = BAL_TYPE_SPRV;
+        struct BalSpirv *shader = exporter->shaders[i];
+        BAL_SET_REF_PTR(desc->ref, shader);
         table_index++;
     }
 
@@ -216,4 +269,28 @@ struct BalFont *BAL_allocate_font(struct BalExporter *exporter, u32 size)
 struct BalBuffer *BAL_allocate_buffer(struct BalExporter *exporter, u32 size)
 {
     return BAL_ALLOC_VARIABLE_SIZE_TYPE(exporter->data_end, struct BalBuffer, data, size);
+}
+
+BalString BAL_allocate_string(struct BalExporter *exporter, const char *str)
+{
+    BalString bal_string = BAL_ALLOC(exporter->data_end, strlen(str) + 1);
+    memcpy(bal_string, str, strlen(str) + 1);
+    bal_string[strlen(str)] = '\0';
+    return bal_string;
+}
+
+struct BalSpirv *BAL_allocate_spirv(struct BalExporter *exporter, const char *name, u8 *data, u32 size)
+{
+    BAL_ALIGN(exporter->data_end);
+    struct BalSpirv *spirv = (struct BalSpirv *)BAL_ALLOC(exporter->data_end, sizeof(*spirv));
+
+    BalString bal_name = BAL_allocate_string(exporter, name);
+    struct BalBuffer *bal_buffer = BAL_allocate_buffer(exporter, size);
+    bal_buffer->size = size;
+    memcpy(bal_buffer->data, data, size);
+
+    BAL_SET_REF_PTR(spirv->name, bal_name);
+    BAL_SET_REF_PTR(spirv->buffer, bal_buffer);
+
+    return spirv;
 }
