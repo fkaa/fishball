@@ -5,7 +5,7 @@
 #include <vulkan\vulkan.h>
 
 struct FbWindowConfig {
-    char *title;
+    const char *title;
     unsigned width, height;
     int validation_layer;
 };
@@ -29,6 +29,8 @@ struct FbWindow {
     u32 buffer_count;
     VkSemaphore *image_semaphores;
     VkSemaphore *finished_semaphores;
+
+    const char *title;
 };
 
 enum FbErrorCode;

@@ -273,8 +273,9 @@ struct BalBuffer *BAL_allocate_buffer(struct BalExporter *exporter, u32 size)
 
 BalString BAL_allocate_string(struct BalExporter *exporter, const char *str)
 {
+    BAL_ALIGN(exporter->data_end);
     BalString bal_string = BAL_ALLOC(exporter->data_end, strlen(str) + 1);
-    memcpy(bal_string, str, strlen(str) + 1);
+    memcpy(bal_string, str, strlen(str));
     bal_string[strlen(str)] = '\0';
     return bal_string;
 }

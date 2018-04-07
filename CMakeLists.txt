@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(fishball C)
+project(fishball)
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -85,6 +85,8 @@ set(FISHBALL_SOURCES
     src/voxel.h
     src/voxel.c
 
+    src/vkallocator.cc
+
     tool/helper.c
     tool/helper.h
 
@@ -97,7 +99,7 @@ add_executable(fishball ${FISHBALL_SOURCES})
 add_custom_target(
     asset_build ALL
     #    TARGET fishball POST_BUILD
-    COMMAND ${CMAKE_BINARY_DIR}/fishconv
+    COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/fishconv
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/asset
     COMMENT "Building assets.."
     DEPENDS fishconv
@@ -119,5 +121,6 @@ target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/tool")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/glfw/include")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/utf8")
 target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/remotery/lib")
+target_include_directories(fishball PRIVATE "${PROJECT_SOURCE_DIR}/external/VulkanMemoryAllocator/src")
 
 target_link_libraries(fishball glfw ${VULKAN_LIBRARY})

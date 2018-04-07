@@ -30,7 +30,7 @@ static r32 vec3_dot(struct FbVec3 a, struct FbVec3 b)
 
 static r32 vec3_length(struct FbVec3 vec)
 {
-    return sqrt(vec3_dot(vec, vec));
+    return sqrtf(vec3_dot(vec, vec));
 }
 
 static struct FbVec3 vec3_normalize(struct FbVec3 vec)

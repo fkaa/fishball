@@ -446,6 +446,16 @@ enum FbErrorCode window_new(struct FbWindowConfig cfg, struct FbWindow **wnd, st
 
     gpu->command_buffers = command_buffers;
 
+	VmaAllocatorCreateInfo vma_info = {0};
+    vma_info.physicalDevice = physical_device;
+	vma_info.device = gpu->device;
+	//vma_info.preferredLargeHeapBlockSize = MiB(128);
+
+    vmaCreateAllocator(&vma_info, &gpu->allocator);
+
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &gpu->memory_properties);
+
+    window.title = cfg.title;
 
     *wnd = malloc(sizeof(**wnd));
     **wnd = window;
@@ -472,7 +482,7 @@ void window_cxt(struct FbWindow *wnd)
 
 u32 window_acquire_image(struct FbGpu *gpu, struct FbWindow *wnd)
 {
-    printf("window_acquire_image: signal=0x%04x\n", wnd->image_semaphores[wnd->current_buffer]);
+    //printf("window_acquire_image: signal=0x%04x\n", wnd->image_semaphores[wnd->current_buffer]);
     vkAcquireNextImageKHR(gpu->device, wnd->swapchain, 0xffffffffffffffff, wnd->image_semaphores[wnd->current_buffer], VK_NULL_HANDLE, &wnd->current_image);
 
     return wnd->current_buffer;
@@ -495,7 +505,7 @@ void window_submit(struct FbWindow *wnd, struct FbGpu *gpu, VkCommandBuffer *buf
 
     vkQueueSubmit(gpu->graphics_queue, 1, &submit_info, 0);
 
-    printf("window_submit: wait=0x%04x, signal=%04x\n", wnd->image_semaphores[wnd->current_buffer], wnd->finished_semaphores[wnd->current_buffer]);
+    //printf("window_submit: wait=0x%04x, signal=%04x\n", wnd->image_semaphores[wnd->current_buffer], wnd->finished_semaphores[wnd->current_buffer]);
 }
 
 void window_present(struct FbGpu *gpu, struct FbWindow *wnd)
@@ -513,7 +523,7 @@ void window_present(struct FbGpu *gpu, struct FbWindow *wnd)
     present_info.pSwapchains = &wnd->swapchain;
     present_info.pImageIndices = &wnd->current_image;
 
-    printf("window_present: wait=0x%04x\n", wnd->finished_semaphores[wnd->current_buffer]);
+    //printf("window_present: wait=0x%04x\n", wnd->finished_semaphores[wnd->current_buffer]);
     vkQueuePresentKHR(gpu->graphics_queue, &present_info);
     vkQueueWaitIdle(gpu->graphics_queue);
 
@@ -534,5 +544,16 @@ int window_open(struct FbWindow *wnd)
 void window_poll(struct FbWindow *_wnd)
 {
     glfwPollEvents();
+
+    if (glfwGetKey(_wnd->window_handle, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(_wnd->window_handle, 1);
+    }
+
+    s32 w, h;
+    glfwGetWindowSize(_wnd->window_handle, &w, &h);
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "%s [w=%d,h=%d]", _wnd->title, w, h);
+    glfwSetWindowTitle(_wnd->window_handle, buf);
 }
 

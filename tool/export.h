@@ -16,7 +16,7 @@ struct BalExporter {
 #define BAL_ALIGN(pointer) \
     ((char *)pointer = (char *)(((uintptr_t)pointer + 7) & ~7))
 #define BAL_ALLOC(pointer, size) \
-    ((char *)pointer += size, (char *)pointer - size)
+    ((char *)pointer += (size), (char *)pointer - (size))
 #define BAL_ALLOC_VARIABLE_SIZE_TYPE(pointer, type, field, count) \
     (BAL_ALIGN(pointer), (type *)BAL_ALLOC(pointer, BAL_GET_SIZE(type, field, count)))
 

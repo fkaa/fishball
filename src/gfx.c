@@ -11,172 +11,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-
-/*
-VkShaderStageFlagBits get_vk_stage(enum BalShaderType type)
-{
-    switch (type) {
-        case BAL_SHADER_VERTEX:
-            return VK_SHADER_STAGE_VERTEX_BIT;
-        case BAL_SHADER_PIXEL:
-            return VK_SHADER_STAGE_FRAGMENT_BIT;
-        default:
-            return 0;
-}
-
-static VkPipelineShaderStageCreateInfo *GFX_create_pipeline_shaders(VkDevice device, struct BalSpirv *spirv, u32 shader_len)
-{
-    VkPipelineShaderStageCreateInfo *vk_shaders = malloc(shader_len * sizeof(*vk_shaders));
-
-    for (u32 i = 0; i < shader_len; ++i) {
-        struct BalBuffer *buf = BAL_PTR(spirv[i].buffer);
-
-        VkShaderModuleCreateInfo module_info = {
-            .sType = VK_STRUCTURE_SHADER_MODULE_CREATE_INFO,
-            .pNext = 0,
-            .flags = 0,
-            .codeSize = buf->size,
-            .pCode = (u32 *)buf->data
-        };
-        VkShaderModule *module = 0;
-        vkCreateShaderModule(device, &module_info, 0, &module);
-
-        vk_shaders[i] = (VkPipelineShaderStageCreateInfo) {
-            .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-            .pNext = 0,
-            .flags = 0,
-            .stage = get_vk_stage(spirv->type),
-            .module = module,
-            .pName = "main",
-            .pSpecializationInfo = 0
-        };
-    }
-
-    return vk_shaders;
-}
-
-enum FbErrorCode GFX_create_graphics_pipeline(struct FbGpu *gpu,
-                                              struct BalSpirv *shaders,
-                                              u32 shader_len,
-                                              VkVertexInputBindingDescription *vertex_bindings,
-                                              u32 bind_count,
-                                              VkVertexInputAttributeDescription *vertex_attributes,
-                                              u32 attr_count,
-                                              VkViewport viewport,
-                                              VkRect2D scissor,
-                                              VkPipelineColorBlendAttachmentState *blend_attachments,
-                                              u32 blend_count,
-                                              struct FbGfxTargetDescription *targets,
-                                              u32 target_count,
-                                              struct FbGfxPipeline *pipeline)
-{
-    VkPipelineShaderStageCreateInfo *shader_info = GFX_create_pipeline_shaders(gpu->device, shaders, shader_len);
-    VkPipelineVertexInputStateCreateInfo vertex_info = {
-        .sType = VK_STRUCTURE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .vertexBindingDescriptionCount = bind_count,
-        .pVertexBindingDescriptions = vertex_bindings,
-        .vertexAttributeDescriptionCount = attr_count,
-        .pVertexAttributeDescriptions = vertex_attributes
-    };
-
-    VkPipelineInputAssemblyStateCreateInfo ia_info = {
-        .sType = VK_STRUCTURE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-        .primitiveRestartEnable = 0
-    };
-
-    VkPipelineViewportStateCreateInfo viewport_info = {
-        .sType = VK_STRUCTURE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .viewportCount = 1,
-        .pViewports = &viewport,
-        .scissorCount = 1,
-        .pScissors = &scissor
-    };
-
-    VkPipelineRasterizationStateCreateInfo raster_info = {
-        .sType = VK_STRUCTURE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .depthClampEnable = 1,
-        .rasterizerDiscardEnable = 1,
-        .polygonMode = VK_POLYGON_MODE_FILL,
-        .cullMode = VK_CULL_MODE_BACK_BIT,
-        .frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
-        .depthBiasEnable = 0,
-        .depthBiasConstantFactor = .0f,
-        .depthBiasClamp = .0f,
-        .depthBiasSlopeFactor = .0f,
-        .lineWidth = 0.f,
-    };
-
-    VkPipelineMultisampleStateCreateInfo msaa_info = {
-        .sType = VK_STRUCTURE_MULTISAMPLE_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .rasterizationSamples = 1,
-        .sampleShadingEnable = VK_FALSE,
-        .minSampleShading = .0f,
-        .pSampleMask = 0,
-        .alphaToCoverageEnable = VK_FALSE,
-        .alphaToOneEnable = VK_FALSE
-    };
-
-    VkPipelineDepthStencilStateCreateInfo depth_stencil_info = {
-        .sType = VK_STRUCTURE_DEPTH_STENCIL_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .depthTestEnable = VK_TRUE,
-        .depthWriteEnable = VK_TRUE,
-        .depthCompareOp = VK_COMPARE_LESS_OR_EQUAL,
-        .depthBoundsTestEnable = VK_FALSE,
-        .stencilTestEnable = VK_FALSE,
-        .front = 0,
-        .back = 0,
-        .minDepthBounds = 0.f,
-        .maxDepthBounds = 1.f
-    };
-
-    VkPipelineColorBlendStateCreateInfo blend_info = {
-        .sType = VK_STRUCTURE_COLOR_BLEND_STATE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .logicOpEnable = VK_FALSE,
-        .logicOp = VK_FALSE,
-        .attachmentCount = blend_count,
-        .pAttachments = blend_attachments,
-        .blendConstants = { 1.f, 1.f, 1.f, 1.f }
-    };
-
-
-    VkGraphicsPipelineCreateInfo pipeline_info = {
-        .sType = VK_STRUCTURE_GRAPHICS_PIPELINE_CREATE_INFO,
-        .pNext = 0,
-        .flags = 0,
-        .stageCount = shader_len,
-        .pStages = shader_info,
-        .pVertexInputState = &vertex_info,
-        .pInputAssemblyState = &ia_info,
-        .pTesselationState = 0,
-        .pViewportState = &viewport_info,
-        .pRasterizationState = &raster_info,
-        .pMultisampleState = &msaa_info,
-        .pDepthStencilState = &depth_stencil_info,
-        .pColorBlendState = &blend_info,
-        .pDynamicState = 0,
-
-        .subpass = 0,
-        .basePipelineHandle = 0,
-        .basePipelineIndex = 0
-    };
-
-    free(shader_info);
-}*/
+#include <limits.h>
 
 VkShaderStageFlagBits get_vk_stage(enum BalShaderType type)
 {
@@ -484,6 +319,390 @@ enum FbErrorCode GFX_create_render_program(struct FbGpu *gpu, struct BalDescript
     return FB_ERR_NONE;
 }
 
+u32 GFXVK_find_memory_type(struct FbGpu *gpu, u32 type_bits, enum FbGfxMemoryUsage usage)
+{
+    VkPhysicalDeviceMemoryProperties prop = gpu->memory_properties;
+
+    VkMemoryPropertyFlags required = 0;
+    VkMemoryPropertyFlags preferred = 0;
+
+    switch (usage) {
+        case FB_GFX_MEMORY_USAGE_GPU_ONLY:
+            preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            break;
+        case FB_GFX_MEMORY_USAGE_CPU_ONLY:
+            required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+            break;
+        case FB_GFX_MEMORY_USAGE_CPU_TO_GPU:
+            required |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+            preferred |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            break;
+        case FB_GFX_MEMORY_USAGE_GPU_TO_CPU:
+            required |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_CACHED_BIT;
+            break;
+        default:
+            // TODO(fkaa): err
+            break;
+    }
+
+    for (u32 i = 0; i < prop.memoryTypeCount; ++i) {
+        if (((type_bits >> i) & 1) == 0) {
+            continue;
+        }
+
+        VkMemoryPropertyFlags properties = prop.memoryTypes[i].propertyFlags;
+        if ((properties & required) != required) {
+            continue;
+        }
+
+        if ((properties & preferred) != preferred) {
+            continue;
+        }
+
+        return i;
+    }
+
+    for (u32 i = 0; i < prop.memoryTypeCount; ++i) {
+        if (((type_bits >> i) & 1) == 0) {
+            continue;
+        }
+
+        VkMemoryPropertyFlags properties = prop.memoryTypes[i].propertyFlags;
+        if ((properties & required) != required) {
+            continue;
+        }
+
+        return i;
+    }
+
+    return 0xffffffff;
+}
+
+enum FbErrorCode GFX_create_staging_pool(struct FbGpu *gpu, u32 buffer_count, u64 size, struct FbGfxStagingPool *pool)
+{
+    VkBufferCreateInfo buffer_info = { 0 };
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+    struct FbGfxStagingBuffer *buffers = calloc(buffer_count, sizeof(*buffers));
+    for (u32 i = 0; i < buffer_count; ++i) {
+        buffers[i].offset = 0;
+
+        vkCreateBuffer(gpu->device, &buffer_info, NULL, &buffers[i].buffer);
+    }
+
+    VkMemoryRequirements requirements = { 0 };
+
+    for (u32 i = 0; i < buffer_count; ++i) {
+        vkGetBufferMemoryRequirements(gpu->device, buffers[i].buffer, &requirements);
+    }
+
+    VkDeviceSize align_mod = requirements.size % requirements.alignment;
+    VkDeviceSize align_size = (align_mod == 0) ? requirements.size : (requirements.size + requirements.alignment - align_mod);
+
+    VkMemoryAllocateInfo alloc_info = {0};
+    alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    alloc_info.allocationSize = align_size * buffer_count;
+    alloc_info.memoryTypeIndex = GFXVK_find_memory_type(gpu, requirements.memoryTypeBits, FB_GFX_MEMORY_USAGE_CPU_TO_GPU);
+
+    VkDeviceMemory memory = 0;
+    vkAllocateMemory(gpu->device, &alloc_info, NULL, &memory);
+
+    for (u32 i = 0; i < buffer_count; ++i) {
+        vkBindBufferMemory(gpu->device, buffers[i].buffer, memory, i * align_size);
+    }
+
+    u8 *mapped_data = 0;
+    vkMapMemory(gpu->device, memory, 0, align_size * buffer_count, 0, &mapped_data);
+
+    VkCommandPoolCreateInfo pool_info = {0};
+    pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_info.queueFamilyIndex = 0;
+
+    VkCommandPool command_pool = 0;
+    vkCreateCommandPool(gpu->device, &pool_info, NULL, &command_pool);
+
+    VkCommandBufferAllocateInfo cmd_buffer_info = {0};
+    cmd_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmd_buffer_info.commandPool = command_pool;
+    cmd_buffer_info.commandBufferCount = 1;
+
+    VkFenceCreateInfo fence_info = {0};
+    fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+    VkCommandBufferBeginInfo begin_info = {0};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    for (u32 i = 0; i < buffer_count; ++i) {
+        vkAllocateCommandBuffers(gpu->device, &cmd_buffer_info, &buffers[i].command_buffer);
+        vkCreateFence(gpu->device, &fence_info, NULL, &buffers[i].fence);
+        vkBeginCommandBuffer(buffers[i].command_buffer, &begin_info);
+
+        buffers[i].data = (u8 *)mapped_data + (i * align_size);
+    }
+
+
+    *pool = (struct FbGfxStagingPool) {
+        .staging_memory = memory,
+        .command_pool = command_pool,
+
+        .mapped_data = mapped_data,
+
+        .max_size = size,
+        .current_buffer = 0,
+        .buffer_count = buffer_count,
+
+        .buffers = buffers
+    };
+
+    return FB_ERR_NONE;
+}
+
+void GFX_wait_staging_buffer(struct FbGfxStagingBuffer *buffer, struct FbGpu *gpu)
+{
+    if (!buffer->submitted) {
+        return;
+    }
+
+    vkWaitForFences(gpu->device, 1, &buffer->fence, VK_TRUE, ULLONG_MAX);
+    vkResetFences(gpu->device, 1, &buffer->fence);
+
+    buffer->offset = 0;
+    buffer->submitted = false;
+
+    VkCommandBufferBeginInfo begin_info = { 0 };
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    vkBeginCommandBuffer(buffer->command_buffer, &begin_info);
+}
+
+void GFX_staging_buffer(struct FbGfxStagingPool *pool, struct FbGpu *gpu, u32 size, u32 alignment, VkCommandBuffer *command_buffer, VkBuffer *buffer, VkDeviceSize *buffer_offset, u8 **buffer_data)
+{
+    if (size > pool->max_size) {
+        // TOOD(fkaa): err
+    }
+
+    struct FbGfxStagingBuffer *staging_buffer = &pool->buffers[pool->current_buffer];
+    u32 align_mod = staging_buffer->offset % alignment;
+    staging_buffer->offset = ((align_mod == 0) ? staging_buffer->offset : (staging_buffer->offset + alignment - align_mod));
+
+    if ((staging_buffer->offset + size) >= pool->max_size && !staging_buffer->submitted) {
+        GFX_flush_staging_pool(pool, gpu);
+    }
+
+    staging_buffer = &pool->buffers[pool->current_buffer];
+    if (staging_buffer->submitted) {
+        GFX_wait_staging_buffer(staging_buffer, gpu);
+    }
+
+    *command_buffer = staging_buffer->command_buffer;
+    *buffer = staging_buffer->buffer;
+    *buffer_offset = staging_buffer->offset;
+    u8 *data = staging_buffer->data + staging_buffer->offset;
+    staging_buffer->offset += size;
+    *buffer_data = data;
+}
+
+void GFX_flush_staging_pool(struct FbGfxStagingPool *pool, struct FbGpu *gpu)
+{
+    struct FbGfxStagingBuffer *buffer = &pool->buffers[pool->current_buffer];
+
+    VkMemoryBarrier barrier = { 0 };
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_INDEX_READ_BIT;
+    vkCmdPipelineBarrier(
+        buffer->command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0,
+        1, &barrier,
+        0, NULL,
+        0, NULL
+    );
+    vkEndCommandBuffer(buffer->command_buffer);
+
+    VkMappedMemoryRange range = { 0 };
+    range.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    range.memory = pool->staging_memory;
+    range.size = VK_WHOLE_SIZE;
+
+    vkFlushMappedMemoryRanges(gpu->device, 1, &range);
+
+    VkSubmitInfo submit_info = { 0 };
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &buffer->command_buffer;
+
+    vkQueueSubmit(gpu->graphics_queue, 1, &submit_info, buffer->fence);
+    buffer->submitted = true;
+
+    pool->current_buffer = (pool->current_buffer + 1) % pool->buffer_count;
+}
+
+void GFX_update_buffer(struct FbGpu *gpu, struct FbGfxStagingPool *pool, struct FbGfxBuffer *buffer, const void *data, u32 size, u32 offset)
+{
+    VkBuffer stage_buffer = 0;
+    VkCommandBuffer stage_cmd_buffer = 0;
+    VkDeviceSize stage_offset = 0;
+    u8 *stage_data = 0;
+
+    GFX_staging_buffer(pool, gpu, size, 1, &stage_cmd_buffer, &stage_buffer, &stage_offset, &stage_data);
+
+    memcpy(stage_data, data, size);
+
+    VkBufferCopy copy = {0};
+    copy.srcOffset = stage_offset;
+    copy.dstOffset = buffer->offset + offset;
+    copy.size = size;
+
+    vkCmdCopyBuffer(stage_cmd_buffer, stage_buffer, buffer->buffer, 1, &copy);
+}
+
+enum FbErrorCode GFX_create_vertex_buffer(struct FbGpu *gpu, u32 size, struct FbGfxStagingPool *pool, const void *data, struct FbGfxBuffer *buffer)
+{
+    VkBufferCreateInfo buffer_info = {0};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo create_info = {0};
+    create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VkBuffer vk_buffer = 0;
+    VmaAllocation vma_alloc = 0;
+    VmaAllocationInfo vma_info = { 0 };
+    
+    vmaCreateBuffer(gpu->allocator, &buffer_info, &create_info, &vk_buffer, &vma_alloc, &vma_info);
+
+    *buffer = (struct FbGfxBuffer) {
+        .size = size,
+        .offset = 0,
+        .buffer = vk_buffer,
+        .vma_alloc = vma_alloc,
+        .vma_info = vma_info
+    };
+
+    if (data) {
+        GFX_update_buffer(gpu, pool, buffer, data, size, 0);
+    }
+    
+    return FB_ERR_NONE;
+}
+
+enum FbErrorCode GFX_create_index_buffer(struct FbGpu *gpu, u32 size, struct FbGfxStagingPool *pool, const void *data, struct FbGfxBuffer *buffer)
+{
+    VkBufferCreateInfo buffer_info = { 0 };
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size = size;
+    buffer_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo create_info = { 0 };
+    create_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    VkBuffer vk_buffer = 0;
+    VmaAllocation vma_alloc = 0;
+    VmaAllocationInfo vma_info = { 0 };
+
+    vmaCreateBuffer(gpu->allocator, &buffer_info, &create_info, &vk_buffer, &vma_alloc, &vma_info);
+
+    *buffer = (struct FbGfxBuffer) {
+        .size = size,
+            .offset = 0,
+            .buffer = vk_buffer,
+            .vma_alloc = vma_alloc,
+            .vma_info = vma_info
+    };
+
+    if (data) {
+        GFX_update_buffer(gpu, pool, buffer, data, size, 0);
+    }
+
+    return FB_ERR_NONE;
+}
+
+enum FbErrorCode GFX_create_sprite_batch(struct FbGpu *gpu, struct FbGfxStagingPool *pool, struct FbGfxRenderProgram *program, u32 buffer_count, u32 size, struct FbGfxSpriteBatch *batch)
+{
+    struct FbGfxBuffer *vertex_buffers = calloc(buffer_count, sizeof(*vertex_buffers));
+    struct FbGfxBuffer *index_buffers = calloc(buffer_count, sizeof(*index_buffers));
+
+    for (u32 i = 0; i < buffer_count; ++i) {
+        GFX_create_vertex_buffer(gpu, size * sizeof(*batch->vertices), pool, NULL, &vertex_buffers[i]);
+        GFX_create_index_buffer(gpu, size * sizeof(*batch->indices), pool, NULL, &index_buffers[i]);
+    }
+
+    *batch = (struct FbGfxSpriteBatch) {
+        .vertex_buffers = vertex_buffers,
+        .index_buffers = index_buffers,
+        .buffer_count = buffer_count,
+        .buffer_size = size,
+        .current_buffer = 0,
+
+        .program = program,
+
+        .vertices = malloc(size * sizeof(*batch->vertices)),
+        .indices = malloc(size * sizeof(*batch->indices)),
+
+        .vertex_cursor = 0,
+        .index_cursor = 0,
+
+        .current_element = 0
+    };
+
+    return FB_ERR_NONE;
+}
+
+void GFX_sprite_batch_upload(struct FbGpu *gpu, struct FbGfxSpriteBatch *batch, struct FbGfxStagingPool *pool)
+{
+    GFX_update_buffer(gpu, pool, &batch->vertex_buffers[batch->current_buffer], batch->vertices, batch->vertex_cursor * sizeof(*batch->vertices), 0);
+    GFX_update_buffer(gpu, pool, &batch->index_buffers[batch->current_buffer], batch->indices, batch->index_cursor * sizeof(*batch->indices), 0);
+    
+    // TODO(fkaa): move somewhere else..
+    GFX_flush_staging_pool(pool, gpu);
+}
+
+void GFX_sprite_batch_draw(struct FbGpu *gpu, struct FbGfxSpriteBatch *batch, struct FbGfxStagingPool *pool, VkCommandBuffer buf)
+{
+    GFX_sprite_batch_upload(gpu, batch, pool);
+
+    VkBuffer buffer;
+    VkDeviceSize offset = 0;
+
+    u32 current_buffer = batch->current_buffer;
+
+    u64 state = 0;
+    state |= (FB_STATE_SRCBLEND_SRC_ALPHA << FB_STATE_SRCBLEND_BITS);
+    state |= (FB_STATE_DSTBLEND_ONE_MINUS_SRC_ALPHA << FB_STATE_DSTBLEND_BITS);
+    state |= FB_STATE_BLEND_ENABLE;
+
+    vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, GFX_find_pipeline(batch->program, gpu, state));
+    vkCmdBindVertexBuffers(buf, 0, 1, &batch->vertex_buffers[current_buffer].buffer, &offset);
+    vkCmdBindIndexBuffer(buf, batch->index_buffers[current_buffer].buffer, offset, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(buf, batch->index_cursor, 1, 0, 0, 0);
+
+    batch->current_buffer = (batch->current_buffer + 1) % batch->buffer_count;
+    batch->vertex_cursor = 0;
+    batch->index_cursor = 0;
+    batch->current_element = 0;
+}
+
+void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxSpriteVertex *vertices, u64 vertex_count, u32 *indices, u64 index_count)
+{
+    if (batch->vertex_cursor + vertex_count > batch->buffer_size ||
+        batch->index_cursor + index_count > batch->buffer_size)
+    {
+        // TODO(fkaa): batch is full
+    }
+
+    memcpy(batch->vertices + batch->vertex_cursor, vertices, vertex_count * sizeof(*batch->vertices));
+    memcpy(batch->indices + batch->index_cursor, indices, index_count * sizeof(*batch->indices));
+
+    batch->current_element += (u32)vertex_count;
+    batch->vertex_cursor += (u32)vertex_count;
+    batch->index_cursor += (u32)index_count;
+}
+
 struct FbGfxDebugText {
     r32 x, y, z;
     u32 color;
@@ -545,350 +764,3 @@ void GFX_debug_draw(struct FbGfxSpriteBatch *batch, struct FbFont *font, struct 
     }
     ARRAY_reset(GFX_debug_messages);
 }
-
-
-enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch)
-{
-    u32 buffers[2] = { 0, 0 };
-    glGenBuffers(2, buffers);
-
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-    glBufferData(GL_ARRAY_BUFFER, vertex_size, 0, FB_GFX_USAGE_DYNAMIC_WRITE);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[1]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size, 0, FB_GFX_USAGE_DYNAMIC_WRITE);
-
-    struct FbGfxBuffer camera_buffer = {0};
-    {
-        struct FbGfxBufferDesc buffer_desc = {
-            .data = 0,
-            .length = sizeof(struct FbMatrix4),
-            .type = FB_GFX_UNIFORM_BUFFER,
-            .usage = FB_GFX_USAGE_STREAM_WRITE
-        };
-        GFX_create_buffer(&buffer_desc, &camera_buffer);
-    }
-
-    *batch = (struct FbGfxSpriteBatch) {
-        .shader = 0,
-        .layout = 0,
-        .texture_bindings = { 0 },
-        .texture_length = 0,
-
-        .new_shader = 0,
-        .new_layout = 0,
-        .new_texture_bindings = { 0 },
-        .new_texture_length = 0,
-
-        .vertex_buffer = { buffers[0], GL_ARRAY_BUFFER },
-        .index_buffer = { buffers[1], GL_ELEMENT_ARRAY_BUFFER },
-        .camera_buffer = camera_buffer,
-
-        .vertex_buffer_ptr = 0,
-        .index_buffer_ptr = 0,
-
-        .vertex_buffer_size = (u32)vertex_size,
-        .index_buffer_size = (u32)index_size,
-
-        .vertex_offset = 0,
-        .index_offset = 0,
-
-        .vertex_cursor = 0,
-        .index_cursor = 0,
-
-        .current_element = 0,
-        .dirty = false,
-    };
-
-    return FB_ERR_NONE;
-}
-
-void GFX_sprite_batch_map_buffers(struct FbGfxSpriteBatch *batch)
-{
-    if (batch->vertex_buffer_ptr || batch->index_buffer_ptr) {
-        printf("trying to map buffers that are already mapped!\n");
-        return;
-    }
-    
-    batch->vertex_offset = batch->vertex_cursor;
-    batch->index_offset = batch->index_cursor;
-
-    glBindBuffer(GL_ARRAY_BUFFER, batch->vertex_buffer.buffer);
-    batch->vertex_buffer_ptr = glMapBufferRange(GL_ARRAY_BUFFER, batch->vertex_cursor, batch->vertex_buffer_size - batch->vertex_cursor, GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-    batch->index_buffer_ptr = glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, batch->index_cursor, batch->index_buffer_size - batch->index_cursor, GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
-}
-
-void GFX_sprite_batch_unmap_buffers(struct FbGfxSpriteBatch *batch)
-{
-    if (!batch->vertex_buffer_ptr || !batch->index_buffer_ptr) {
-        printf("trying to unmap buffers that are not mapped!\n");
-        return;
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, batch->vertex_buffer.buffer);
-    if (batch->vertex_cursor != batch->vertex_offset) {
-        glFlushMappedBufferRange(GL_ARRAY_BUFFER, batch->vertex_offset, batch->vertex_cursor - batch->vertex_offset);
-    }
-    glUnmapBuffer(GL_ARRAY_BUFFER);
-
-    batch->vertex_buffer_ptr = 0;
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-    if (batch->index_cursor != batch->index_offset) {
-        glFlushMappedBufferRange(GL_ELEMENT_ARRAY_BUFFER, batch->index_offset, batch->index_cursor - batch->index_offset);
-    }
-    glUnmapBuffer(GL_ELEMENT_ARRAY_BUFFER);
-
-    batch->index_buffer_ptr = 0;
-}
-
-void GFX_sprite_batch_draw(struct FbGfxSpriteBatch *batch)
-{
-    u32 index_offset = batch->index_offset;
-    u32 index_len = (batch->index_cursor - index_offset) / sizeof(u32);
-
-    if (index_len > 0) {
-        struct FbGfxBufferBinding bindings[] = {
-            { .name = "Camera", .buffer = &batch->camera_buffer, .offset = 0, .length = sizeof(struct FbMatrix4) }
-        };
-
-        GFX_set_vertex_buffers(batch->shader, &batch->vertex_buffer, 1, batch->layout);
-        GFX_set_uniform_buffers(batch->shader, bindings, 1);
-        GFX_set_textures(batch->shader, batch->texture_bindings, batch->texture_length);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batch->index_buffer.buffer);
-        glDrawElements(GL_TRIANGLES, index_len, GL_UNSIGNED_INT, (void *)(u64)index_offset);
-    }
-}
-
-void GFX_sprite_batch_begin(struct FbGfxSpriteBatch *batch)
-{
-    GFX_sprite_batch_map_buffers(batch);
-}
-
-void GFX_sprite_batch_end(struct FbGfxSpriteBatch *batch)
-{
-    GFX_sprite_batch_unmap_buffers(batch);
-    GFX_sprite_batch_draw(batch);
-
-    // TODO(fkaa): dont reset?
-    batch->vertex_cursor = 0;
-    batch->index_cursor = 0;
-
-    batch->vertex_offset = 0;
-    batch->index_offset = 0;
-    batch->current_element = 0;
-}
-
-
-bool GFX_sprite_batch_needs_flush(struct FbGfxSpriteBatch *batch)
-{
-    if (batch->new_shader != batch->shader) {
-        return true;
-    }
-    
-    if (batch->new_layout != batch->layout) {
-        return true;
-    }
-
-    if (batch->new_texture_length != batch->texture_length) {
-        return true;
-    }
-
-    for (u32 i = 0; i < batch->texture_length; ++i) {
-        struct FbGfxTextureBinding bind = batch->new_texture_bindings[i];
-        struct FbGfxTextureBinding batch_bind = batch->texture_bindings[i];
-
-        if (bind.texture == batch_bind.texture) continue;
-
-        if (bind.texture->name != batch_bind.texture->name ||
-            bind.texture->type != batch_bind.texture->type)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, void *vertices, u64 vertex_count, u64 vertex_size, u32 *indices, u64 index_size)
-{
-    if (GFX_sprite_batch_needs_flush(batch)) {
-        GFX_sprite_batch_unmap_buffers(batch);
-        GFX_sprite_batch_draw(batch);
-        GFX_sprite_batch_map_buffers(batch);
-        
-        batch->vertex_offset = batch->vertex_cursor;
-        batch->index_offset = batch->index_cursor;
-
-        batch->shader = batch->new_shader;
-        batch->layout = batch->new_layout;
-        batch->texture_length = batch->new_texture_length;
-        memcpy(batch->texture_bindings, batch->new_texture_bindings, sizeof(struct FbGfxTextureBinding) * batch->texture_length);
-    }
-
-    if (batch->vertex_cursor + vertex_size > batch->vertex_buffer_size ||
-        batch->index_cursor + index_size * sizeof(u32) > batch->index_buffer_size)
-    {
-        GFX_sprite_batch_unmap_buffers(batch);
-        GFX_sprite_batch_draw(batch);
-        GFX_sprite_batch_map_buffers(batch);
-
-        
-        batch->vertex_cursor = 0;
-        batch->index_cursor = 0;
-
-        batch->vertex_offset = 0;
-        batch->index_offset = 0;
-
-        batch->current_element = 0;
-    }
-
-    memcpy((char *)batch->vertex_buffer_ptr + batch->vertex_cursor, vertices, vertex_count * vertex_size);
-    memcpy((char *)batch->index_buffer_ptr + batch->index_cursor, indices, index_size * sizeof(u32));
-
-    batch->current_element += (u32)vertex_count;
-    batch->vertex_cursor += (u32)vertex_count * (u32)vertex_size;
-    batch->index_cursor += (u32)index_size * sizeof(u32);
-}
-
-void GFX_sprite_batch_set_transform(struct FbGfxSpriteBatch *batch, struct FbMatrix4 transform)
-{
-    GFX_update_buffer(&batch->camera_buffer, sizeof(transform), &transform);
-}
-
-void GFX_sprite_batch_set_textures(struct FbGfxSpriteBatch *batch, struct FbGfxTextureBinding *bindings, u32 texture_length)
-{
-    memcpy(batch->new_texture_bindings, bindings, sizeof(struct FbGfxTextureBinding) * texture_length);
-    batch->new_texture_length = texture_length;
-}
-
-void GFX_sprite_batch_set_shader(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader)
-{
-    batch->new_shader = shader;
-}
-
-void GFX_sprite_batch_set_layout(struct FbGfxSpriteBatch *batch, struct FbGfxInputLayout *layout)
-{
-    batch->new_layout = layout;
-}
-
-enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, unsigned int count, struct FbGfxShader *shader)
-{
-    GLuint program = glCreateProgram();
-    for (unsigned int i = 0; i < count; ++i) {
-        struct FbGfxShaderFile file = files[i];
-
-        char *source = 0;
-        u32 source_length = 0;
-        // TODO(fkaa): err, free()
-        FILE_read_whole(file.path, &source, &source_length);
-
-        GLuint shader = glCreateShader(file.type);
-        glShaderSource(shader, 1, &source, &source_length);
-        glCompileShader(shader);
-
-        GLint compile_status = 0;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
-        if (!compile_status) {
-            u32 len = 0;
-            glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-            char *log = malloc(len + 1);
-            glGetShaderInfoLog(shader, len, 0, log);
-
-            printf("GFX: program compile error: %s\n", log);
-            free(log);
-        }
-
-        glAttachShader(program, shader);
-    }
-
-    glLinkProgram(program);
-
-    GLint link_status = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, &link_status);
-    if (!link_status) {
-        u32 len = 0;
-        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &len);
-        char *log = malloc(len + 1);
-        glGetProgramInfoLog(program, len, 0, log);
-
-        printf("GFX: program link error: %s\n", log);
-        free(log);
-    }
-
-    shader->program = program;
-
-    return FB_ERR_NONE;
-}
-
-enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout)
-{
-    struct FbGfxInputLayout l = {0};
-    glGenVertexArrays(1, &l.vao);
-    l.desc = malloc(count * sizeof(*entries));
-    l.count = count;
-    memcpy_s(l.desc, count * sizeof(*entries), entries, count * sizeof(*entries));
-    *layout = l;
-
-    return FB_ERR_NONE;
-}
-
-void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer)
-{
-    glGenBuffers(1, &buffer->buffer);
-    buffer->type = desc->type;
-    glBindBuffer(desc->type, buffer->buffer);
-    glBufferData(desc->type, desc->length, desc->data, desc->usage);
-}
-
-void GFX_update_buffer(struct FbGfxBuffer *buffer, u64 size, void *data)
-{
-    glBindBuffer(buffer->type, buffer->buffer);
-    glBufferSubData(buffer->type, 0, size, data);
-}
-
-void GFX_set_vertex_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout)
-{
-    glBindVertexArray(layout->vao);
-    for (u32 i = 0; i < buffer_count; ++i) {
-        glBindBuffer(GL_ARRAY_BUFFER, buffers[i].buffer);
-        for (u32 j = 0; j < layout->count; ++j) {
-            struct FbGfxVertexEntry entry = layout->desc[j];
-            s32 attr = glGetAttribLocation(shader->program, entry.name);
-            glEnableVertexAttribArray(attr);
-            glVertexAttribPointer(attr, entry.count, entry.type, entry.normalized, entry.stride, (void*)entry.offset);
-        }
-    }
-}
-
-void GFX_set_uniform_buffers(struct FbGfxShader *shader, struct FbGfxBufferBinding *buffers, u32 buffer_count)
-{
-    for (u32 i = 0; i < buffer_count; ++i) {
-        struct FbGfxBufferBinding binding = buffers[i];
-        u32 idx = glGetUniformBlockIndex(shader->program, binding.name);
-        glBindBufferRange(GL_UNIFORM_BUFFER, idx, binding.buffer->buffer, binding.offset, binding.length);
-    }
-}
-
-void GFX_set_textures(struct FbGfxShader *shader, struct FbGfxTextureBinding *textures, u32 texture_count)
-{
-    for (u32 i = 0; i < texture_count; ++i) {
-        struct FbGfxTextureBinding binding = textures[i];
-
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(binding.texture->type, binding.texture->name);
-
-        u32 idx = glGetUniformLocation(shader->program, binding.name);
-        glUseProgram(shader->program);
-        glUniform1i(idx, i);
-    }
-}
-
-void GFX_draw(u32 vertices)
-{
-    glDrawArrays(GL_TRIANGLES, 0, vertices);
-}
-

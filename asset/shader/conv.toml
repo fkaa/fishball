@@ -1,3 +1,4 @@
+# font/ui shaders
 [[spirv]]
 name = "font_vertex"
 source = "font.glslv"
@@ -7,5 +8,18 @@ args = ""
 [[spirv]]
 name = "font_pixel"
 source = "font.glslf"
+stage = "frag"
+args = ""
+
+# test triangle shaders
+[[spirv]]
+name = "triangle_vertex"
+source = "triangle.glslv"
+stage = "vert"
+args = ""
+
+[[spirv]]
+name = "triangle_pixel"
+source = "triangle.glslf"
 stage = "frag"
 args = ""

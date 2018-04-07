@@ -48,14 +48,14 @@ void VXL_new_world(struct FbVoxelWorldConfig cfg, struct FbVoxelWorld **world)
         { .path = "asset/shader/chunk.glslv", .type = FB_GFX_VERTEX_SHADER },
         { .path = "asset/shader/chunk.glslf", .type = FB_GFX_PIXEL_SHADER },
     };
-    GFX_load_shader_files(files, 2, &VXL_shader);
+    //GFX_load_shader_files(files, 2, &VXL_shader);
 
     struct FbGfxVertexEntry desc[] = {
         { .name = "PositionVS", .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 0 },
         { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE, .count = 4, .normalized = true, .stride = 12 * sizeof(u8), .offset = 4 * sizeof(u8) },
         { .name = "NormalVS",   .type = FB_GFX_BYTE, .count = 4, .normalized = false, .stride = 12 * sizeof(u8), .offset = 8 * sizeof(u8) },
     };
-    GFX_create_input_layout(desc, 3, &VXL_layout);
+    //GFX_create_input_layout(desc, 3, &VXL_layout);
 
     w.num_chunks = 1;
     ARRAY_push(w.chunk_keys, VXL_encode_chunk_key(0, 0, 0));

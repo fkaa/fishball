@@ -4,8 +4,8 @@
 #include "shared/types.h"
 #include "mathtypes.h"
 
-// TODO(fkaa): yuck.. gfxtypes.h?
 #include <vulkan/vulkan.h>
+#include "vk_mem_alloc.h"
 
 enum FbErrorCode;
 
@@ -47,17 +47,22 @@ typedef u64 FbGfxStateBits;
 #define FB_STATE_DEPTH_TEST                   (1ull << 60)
 #define FB_STATE_DEPTH_WRITE                  (1ull << 61)
 
+enum FbGfxMemoryUsage {
+    FB_GFX_MEMORY_USAGE_UNKNOWN,
+    FB_GFX_MEMORY_USAGE_GPU_ONLY,
+    FB_GFX_MEMORY_USAGE_CPU_ONLY,
+    FB_GFX_MEMORY_USAGE_CPU_TO_GPU,
+    FB_GFX_MEMORY_USAGE_GPU_TO_CPU,
+};
+
 struct FbGpu {
     VkInstance instance;
     VkDevice device;
     VkQueue graphics_queue;
     VkCommandPool command_pool;
     VkCommandBuffer *command_buffers;
-};
-
-struct FbGfxPipeline {
-    enum FbGfxStateBits state_bits;
-    VkPipeline pipeline;
+    VmaAllocator allocator;
+    VkPhysicalDeviceMemoryProperties memory_properties;
 };
 
 struct FbGfxVertexLayout {
@@ -83,6 +88,33 @@ struct FbGfxRenderProgram {
     u64 *pipeline_bits;
 };
 
+struct FbGfxStagingBuffer {
+    VkCommandBuffer command_buffer;
+    VkBuffer buffer;
+    VkFence fence;
+    VkDeviceSize offset;
+
+    u8 *data;
+    bool submitted;
+};
+
+struct FbGfxStagingPool {
+    VkDeviceMemory staging_memory;
+    VkCommandPool command_pool;
+
+    u8 *mapped_data;
+
+    u64 max_size;
+    u32 current_buffer;
+    u32 buffer_count;
+
+    struct FbGfxStagingBuffer *buffers;
+};
+
+enum FbErrorCode GFX_create_staging_pool(struct FbGpu *gpu, u32 buffer_count, u64 size, struct FbGfxStagingPool *pool);
+void GFX_staging_buffer(struct FbGfxStagingPool *pool, struct FbGpu *gpu, u32 size, u32 alignment, VkCommandBuffer *command_buffer, VkBuffer *buffer, VkDeviceSize *buffer_offset, u8 **buffer_data);
+void GFX_flush_staging_pool(struct FbGfxStagingPool *pool, struct FbGpu *gpu);
+
 struct FbGfxTargetDescription {
     VkAttachmentDescription desc;
     VkPipelineColorBlendAttachmentState blend;
@@ -97,8 +129,11 @@ struct FbGfxBufferDesc {
 };
 
 struct FbGfxBuffer {
-    u32 buffer;
-    u32 type;
+    u32 size;
+    u32 offset;
+    VkBuffer buffer;
+    VmaAllocation vma_alloc;
+    VmaAllocationInfo vma_info;
 };
 
 struct FbGfxTexture {
@@ -174,62 +209,39 @@ enum FbGfxBufferUsage {
     FB_GFX_USAGE_DYNAMIC_COPY = 0x88EA,
 };
 
+struct FbGfxSpriteVertex {
+    r32 x, y, z; // 12
+    u32 color;   // 16
+    r32 u, v, w; // 22
+};
 
 struct FbGfxSpriteBatch {
-    struct FbGfxShader *shader;
-    struct FbGfxInputLayout *layout;
-    struct FbGfxTextureBinding texture_bindings[8];
-    u32 texture_length;
+    struct FbGfxBuffer *vertex_buffers;
+    struct FbGfxBuffer *index_buffers;
+    u32 buffer_count;
+    u32 buffer_size;
+    u32 current_buffer;
 
-    struct FbGfxShader *new_shader;
-    struct FbGfxInputLayout *new_layout;
-    struct FbGfxTextureBinding new_texture_bindings[8];
-    u32 new_texture_length;
-
-    struct FbGfxBuffer vertex_buffer;
-    struct FbGfxBuffer index_buffer;
     struct FbGfxBuffer camera_buffer;
+    struct FbGfxRenderProgram *program;
 
-    void *vertex_buffer_ptr;
-    void *index_buffer_ptr;
-
-    u32 vertex_buffer_size;
-    u32 index_buffer_size;
-
-    u32 vertex_offset;
-    u32 index_offset;
+    struct FbGfxSpriteVertex *vertices;
+    u32 *indices;
 
     u32 vertex_cursor;
     u32 index_cursor;
 
     u32 current_element;
-    bool dirty;
 };
+
+enum FbErrorCode GFX_create_sprite_batch(struct FbGpu *gpu, struct FbGfxStagingPool *pool, struct FbGfxRenderProgram *program, u32 buffer_count, u32 size, struct FbGfxSpriteBatch *batch);
+void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, struct FbGfxSpriteVertex *vertices, u64 vertex_count, u32 *indices, u64 index_count);
+void GFX_sprite_batch_draw(struct FbGpu *gpu, struct FbGfxSpriteBatch *batch, struct FbGfxStagingPool *pool, VkCommandBuffer buf);
 
 // debug
 void GFX_debug_text(r32 x, r32 y, r32 z, u32 color, const char *fmt, ...);
 void GFX_debug_draw(struct FbGfxSpriteBatch *batch, struct FbFont *font, struct FbMatrix4 cam);
 
 enum FbErrorCode GFX_create_render_program(struct FbGpu *gpu, struct BalDescriptorTable *table, struct FbGfxRenderProgramDesc desc, struct FbGfxRenderProgram *program);
-
-// sprite batch
-enum FbErrorCode GFX_create_sprite_batch(u64 vertex_size, u64 index_size, struct FbGfxSpriteBatch *batch);
-void GFX_sprite_batch_begin(struct FbGfxSpriteBatch *batch);
-void GFX_sprite_batch_end(struct FbGfxSpriteBatch *batch);
-void GFX_sprite_batch_append(struct FbGfxSpriteBatch *batch, void *vertices, u64 vertex_count, u64 vertex_size, u32 *indices, u64 index_size); 
-void GFX_sprite_batch_set_transform(struct FbGfxSpriteBatch *batch, struct FbMatrix4 transform); 
-void GFX_sprite_batch_set_textures(struct FbGfxSpriteBatch *batch, struct FbGfxTextureBinding *bindings, u32 texture_length);
-void GFX_sprite_batch_set_shader(struct FbGfxSpriteBatch *batch, struct FbGfxShader *shader);
-void GFX_sprite_batch_set_layout(struct FbGfxSpriteBatch *batch, struct FbGfxInputLayout *layout);
-
-// low level
-enum FbErrorCode GFX_load_shader_files(struct FbGfxShaderFile *files, u32 count, struct FbGfxShader *shader);
-enum FbErrorCode GFX_create_input_layout(struct FbGfxVertexEntry *entries, u32 count, struct FbGfxInputLayout *layout);
-void GFX_create_buffer(struct FbGfxBufferDesc *desc, struct FbGfxBuffer *buffer);
-void GFX_update_buffer(struct FbGfxBuffer *buffer, u64 size, void *data);
-void GFX_set_vertex_buffers(struct FbGfxShader *shader, struct FbGfxBuffer *buffers, u32 buffer_count, struct FbGfxInputLayout *layout);
-void GFX_set_uniform_buffers(struct FbGfxShader *shader, struct FbGfxBufferBinding *buffers, u32 buffer_count);
-void GFX_set_textures(struct FbGfxShader *shader, struct FbGfxTextureBinding *textures, u32 texture_count);
-void GFX_draw(u32 vertices);
 
 #endif /* FB_GFX_H */

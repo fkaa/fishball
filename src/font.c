@@ -35,7 +35,7 @@ enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id
     printf("layers: %d, width: %d, height: %d\n", layers, width, height);
 
     u32 texture = 0;
-    glGenTextures(1, &texture);
+ /*   glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, width, height, layers, 0, GL_RED, GL_UNSIGNED_BYTE, buffer->data);
@@ -43,7 +43,7 @@ enum FbErrorCode FONT_load_font(struct BalDescriptorTable *table, const char *id
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+*/
     f.texture_array = (struct FbGfxTexture) { .type = GL_TEXTURE_2D_ARRAY, .name = texture };
 
     *font = malloc(sizeof(**font));
@@ -58,39 +58,6 @@ struct FbGfxBuffer FONT_index_buffer = {0};
 
 enum FbErrorCode FONT_enable_drawing()
 {
-    struct FbGfxShaderFile files[] = {
-        { .path = "asset/shader/font.glslv", .type = FB_GFX_VERTEX_SHADER },
-        { .path = "asset/shader/font.glslf", .type = FB_GFX_PIXEL_SHADER },
-    };
-    GFX_load_shader_files(files, 2, &FONT_shader);
-
-    u32 stride = sizeof(struct FbGlyphVertex);
-    struct FbGfxVertexEntry desc[] = {
-        { .name = "PositionVS", .type = FB_GFX_FLOAT,          .count = 3, .normalized = false, .stride = stride, .offset = 0 },
-        { .name = "ColorVS",    .type = FB_GFX_UNSIGNED_BYTE,  .count = 4, .normalized = true,  .stride = stride, .offset = 3 * sizeof(r32) },
-        { .name = "TexCoordVS", .type = FB_GFX_FLOAT,   .count = 3, .normalized = false, .stride = stride, .offset = 3 * sizeof(r32) + sizeof(u32) },
-    };
-    GFX_create_input_layout(desc, 3, &FONT_layout);
-
-    {
-        struct FbGfxBufferDesc buffer_desc = {
-            .data = 0,
-            .length = MiB(4),
-            .type = FB_GFX_VERTEX_BUFFER,
-            .usage = FB_GFX_USAGE_DYNAMIC_WRITE
-        };
-        GFX_create_buffer(&buffer_desc, &FONT_vertex_buffer);
-    }
-
-    {
-        struct FbGfxBufferDesc buffer_desc = {
-            .data = 0,
-            .length = MiB(1),
-            .type = FB_GFX_INDEX_BUFFER,
-            .usage = FB_GFX_USAGE_DYNAMIC_WRITE
-        };
-        GFX_create_buffer(&buffer_desc, &FONT_index_buffer);
-    }
 
     return FB_ERR_NONE;
 }
@@ -140,9 +107,9 @@ void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const
         { "Texture", &font->texture_array }
     };
 
-    GFX_sprite_batch_set_shader(batch, &FONT_shader);
-    GFX_sprite_batch_set_layout(batch, &FONT_layout);
-    GFX_sprite_batch_set_textures(batch, bindings, 1);
+    //GFX_sprite_batch_set_shader(batch, &FONT_shader);
+    //GFX_sprite_batch_set_layout(batch, &FONT_layout);
+    //GFX_sprite_batch_set_textures(batch, bindings, 1);
 
     //u32 color = 0xff000088;
     r32 cursor_x = x;
@@ -155,7 +122,7 @@ void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const
             r32 glyph_pos_x = cursor_x + glyph.xoff;
             r32 glyph_pos_y = cursor_y + glyph.yoff;
 
-            struct FbGlyphVertex vertices[4] = {
+            struct FbGfxSpriteVertex vertices[4] = {
                 // top left
                 { glyph_pos_x, glyph_pos_y, 0,
                   color,
@@ -185,7 +152,7 @@ void FONT_draw_string(struct FbFont *font, struct FbGfxSpriteBatch *batch, const
                 offset + 2, offset + 3, offset + 1
             };
 
-            GFX_sprite_batch_append(batch, vertices, 4, sizeof(struct FbGlyphVertex), indices, 6);
+            GFX_sprite_batch_append(batch, vertices, 4, indices, 6);
 
             cursor_x += glyph.xadvance;
         }

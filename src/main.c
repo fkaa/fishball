@@ -45,7 +45,7 @@ enum FbErrorCode run()
     struct FbWindowConfig wnd_cfg = {
         .width = 800,
         .height = 600,
-        .title = "Test Window",
+        .title = "FB",
         .validation_layer = 1
     };
 
@@ -106,26 +106,29 @@ enum FbErrorCode run()
 
     VkVertexInputAttributeDescription attributes[] = {
         { .location = 0, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = 0 },
-        { .location = 1, .binding = 0, .format = VK_FORMAT_R8G8B8A8_UNORM,   .offset = offsetof(struct FbGlyphVertex, color) },
-        { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(struct FbGlyphVertex, u) },
+        { .location = 1, .binding = 0, .format = VK_FORMAT_R8G8B8A8_UNORM,   .offset = offsetof(struct FbGfxSpriteVertex, color) },
+        { .location = 2, .binding = 0, .format = VK_FORMAT_R32G32B32_SFLOAT, .offset = offsetof(struct FbGfxSpriteVertex, u) },
     };
 
     struct FbGfxRenderProgramDesc program_desc[] = {
-        [0] = { "font_vertex", "font_pixel", { 1, &bindings, 3, attributes }}
+        [0] = { "font_vertex", "font_pixel", { 1, &bindings, 3, attributes }},
+        [1] = { "triangle_vertex", "triangle_pixel", { 0, NULL, 0, NULL }}
     };
     struct FbGfxRenderProgram program = { 0 };
     GFX_create_render_program(&gpu, table, program_desc[0], &program);
 
+    struct FbGfxRenderProgram tri_program = { 0 };
+    GFX_create_render_program(&gpu, table, program_desc[1], &tri_program);
 
-
-
+    struct FbGfxStagingPool pool = { 0 };
+    GFX_create_staging_pool(&gpu, wnd->buffer_count, MiB(16), &pool);
 
     struct FbGfxSpriteBatch batch;
-//    GFX_create_sprite_batch(KiB(2048), KiB(512), &batch);
+    GFX_create_sprite_batch(&gpu, &pool, &program, wnd->buffer_count, 100000, &batch);
 
     struct FbFont *font;
 
-//    FONT_load_font(table, "unifont", &font);
+    FONT_load_font(table, "unifont", &font);
 //    FONT_enable_drawing();
 
     /*for (int i = 0; i < 32; i++) {
@@ -191,14 +194,15 @@ enum FbErrorCode run()
         window_poll(wnd);
 
         u32 image_idx = window_acquire_image(&gpu, wnd);
-        printf("image idx=%d\n", image_idx);
+        //printf("image idx=%d\n", image_idx);
+
 
         VkCommandBuffer buf = gpu.command_buffers[image_idx];
         VkCommandBufferBeginInfo begin_info = { 0 };
         begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         begin_info.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
-        VkClearValue clear = { 0.1f, 0.4f, 0.8f, 1.f };
+        VkClearValue clear = { 0.f, 99 / 255.f, 177 / 255.f, 1.f };
         VkRenderPassBeginInfo renderpass_info = { 0 };
         renderpass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
         renderpass_info.framebuffer = wnd->swapchain_fbos[image_idx];
@@ -209,6 +213,21 @@ enum FbErrorCode run()
 
         vkBeginCommandBuffer(buf, &begin_info);
         vkCmdBeginRenderPass(buf, &renderpass_info, VK_SUBPASS_CONTENTS_INLINE);
+        vkCmdBindPipeline(buf, VK_PIPELINE_BIND_POINT_GRAPHICS, tri_program.cached_pipelines[0]);
+
+        VkViewport viewport = {
+            0.f, 0.f,
+            wnd->swapchain_extent.width,
+            wnd->swapchain_extent.height,
+            0.f, 1.f
+        };
+        vkCmdSetScissor(buf, 0, 1, &renderpass_info.renderArea);
+        vkCmdSetViewport(buf, 0, 1, &viewport);
+        vkCmdDraw(buf, 3, 1, 0, 0);
+
+        FONT_draw_string(font, &batch, u8"\u300c\u792a\u79aa\u7948\u300d - a\u263bb\u263ac\u2602", 10, 26, 0xff22ff44);
+        GFX_sprite_batch_draw(&gpu, &batch, &pool, buf);
+
         vkCmdEndRenderPass(buf);
         vkEndCommandBuffer(buf);
 
@@ -216,6 +235,8 @@ enum FbErrorCode run()
         window_present(&gpu, wnd);
         t += 0.0001f;
     }
+
+    window_destroy(wnd);
 
     rmt_DestroyGlobalInstance(rmt);
 
